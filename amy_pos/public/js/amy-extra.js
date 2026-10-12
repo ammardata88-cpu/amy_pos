@@ -266,7 +266,7 @@ V.setup = function(root){
     var ul = h("ul",{class:"chk-list"});
     st.checks.forEach(function(x){ ul.appendChild(h("li",{class:x.ok?"ok":"no"}, h("i",null,AMY.icon(x.ok?"check":"clock")), h("span",{text:ar?x.ar:x.en}))) });
     box.appendChild(ul);
-    if(st.zatca) box.appendChild(h("div",{class:"hd",style:"margin-top:36px"},h("h2",{text:"ZATCA"}),h("p",{class:"mut",text:T.zatca}),h("a",{class:"btn g",href:"/app/zatca-business-settings"},AMY.icon("shield"),T.zbtn)));
+    if(st.zatca) box.appendChild(h("div",{class:"hd",style:"margin-top:36px"},h("h2",{text:"ZATCA"}),h("p",{class:"mut",text:T.zatca}),h("a",{class:"btn g",href:"#/e-invoicing"},AMY.icon("shield"),T.zbtn)));
   }
   function run(){
     var b = box.querySelector(".note .btn"); if(b){ b.disabled = true; b.lastChild.textContent = T.running }
@@ -301,8 +301,8 @@ AMY.cfg.settings.unshift({to:"/setup",icon:"check",l:["التهيئة السري
       out.push({t:AMY.lb(c.plural), hint:ar()?"صفحة":"Page", go:"/"+c.slug, icon:c.icon||"list"});
       if(p.create && !c.noNew) out.push({t:AMY.lb(c.newLabel||c.label), hint:ar()?"إنشاء":"Create", go:"/"+c.slug+"/new", icon:"plus"});
     });
-    [["/reports",["التقارير","Reports"]],["/settings",["الإعدادات","Settings"]],["/users",["المستخدمون والصلاحيات","Users & roles"]],["/setup",["التهيئة السريعة","Quick setup"]]].forEach(function(x){
-      if((x[0]==="/users"||x[0]==="/setup") && !AMY.boot.is_admin) return;
+    [["/reports",["التقارير","Reports"]],["/settings",["الإعدادات","Settings"]],["/users",["المستخدمون والصلاحيات","Users & roles"]],["/setup",["التهيئة السريعة","Quick setup"]],["/expenses",["المصروفات","Expenses"]],["/e-invoicing",["الفوترة الإلكترونية","E-invoicing"]]].forEach(function(x){
+      if((x[0]==="/users"||x[0]==="/setup"||x[0]==="/e-invoicing") && !AMY.boot.is_admin) return;
       out.push({t:AMY.lb(x[1]), hint:ar()?"صفحة":"Page", go:x[0], icon:x[0]==="/reports"?"rep":"set"});
     });
     return out;

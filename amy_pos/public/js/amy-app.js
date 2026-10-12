@@ -48,6 +48,8 @@ AMY.dispatch = function(p, root){
   if(s[0]==="report") return V.report(s[1], root);
   if(s[0]==="users"){ if(!AMY.boot.is_admin) return root.appendChild(AMY.emptyBox(t("noperm"),"")); return V.users(root) }
   if(s[0]==="settings") return V.settings(root);
+  if(s[0]==="expenses"){ if(!can("Journal Entry")) return root.appendChild(AMY.emptyBox(t("noperm"),"")); return V.expenses(root, s[1]==="new") }
+  if(s[0]==="e-invoicing"){ if(!AMY.boot.is_admin||!AMY.boot.apps.zatca) return root.appendChild(AMY.emptyBox(t("noperm"),"")); return V.einvoice(root) }
   if(s[0]==="setup"){ if(!AMY.boot.is_admin) return root.appendChild(AMY.emptyBox(t("noperm"),"")); return V.setup(root) }
   var dt = bySlug[s[0]];
   if(dt){
@@ -70,7 +72,7 @@ function chrome(){
   var np = $("newPop"); AMY.clear(np);
   [["/sales-invoices/new",["فاتورة مبيعات","Sales invoice"],"sales","Sales Invoice"],["/purchase-invoices/new",["فاتورة مشتريات","Purchase invoice"],"buy","Purchase Invoice"],
    ["/payments/new",["سند قبض / دفع","Payment"],"cash","Payment Entry"],["/customers/new",["عميل","Customer"],"user","Customer"],["/suppliers/new",["مورد","Supplier"],"buy","Supplier"],
-   ["/items/new",["منتج","Item"],"tag","Item"],["/stock-entries/new",["حركة مخزون","Stock entry"],"stock","Stock Entry"]].forEach(function(x){
+   ["/items/new",["منتج","Item"],"tag","Item"],["/stock-entries/new",["حركة مخزون","Stock entry"],"stock","Stock Entry"],["/expenses/new",["مصروف","Expense"],"cash","Journal Entry"]].forEach(function(x){
     if(!(b.perms[x[3]] && b.perms[x[3]].create)) return;
     np.appendChild(h("button",{type:"button",onclick:function(){ closeMenus(); AMY.go(x[0]) }}, AMY.icon(x[2]), lb(x[1])));
   });

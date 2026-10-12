@@ -330,7 +330,7 @@ V.form = function(dt, name, p, root){
       stEl.appendChild(h("span",{class:"num",text:doc.modified? (AMY.lang==="ar"?"آخر تعديل ":"Edited ")+AMY.date(doc.modified):""}));
     }
     var btns = [];
-    if(!isNew && cfg.print){ btns.push(act(t("print"),"print","g",function(){ window.open("/printview?doctype="+encodeURIComponent(dt)+"&name="+encodeURIComponent(doc.name)+"&trigger_print=1&no_letterhead=0","_blank") })) }
+    if(!isNew && cfg.print){ btns.push(act(t("print"),"print","g",function(){ window.open(["Sales Invoice","Purchase Invoice","Quotation","Sales Order","Purchase Order","Payment Entry"].indexOf(dt)<0? "/printview?doctype="+encodeURIComponent(dt)+"&name="+encodeURIComponent(doc.name)+"&trigger_print=1&no_letterhead=0" : "/amy-print?dt="+encodeURIComponent(dt)+"&name="+encodeURIComponent(doc.name)+"&lang="+AMY.lang,"_blank") })) }
     if(!isNew && canCreate(dt)){ btns.push(act(t("dup"),"copy","g",function(){ AMY.go(route(cfg,"new")+"?copy="+encodeURIComponent(doc.name)) })) }
     if(!isNew && cfg.convert && doc.docstatus===1){
       cfg.convert.forEach(function(c){
