@@ -125,10 +125,12 @@ V.dashboard = function(root){
 };
 
 /* =============================================================== REPORTS */
+var COLAR = {"Invoice":"الفاتورة","Customer":"العميل","Customer Name":"اسم العميل","Supplier":"المورد","Supplier Name":"اسم المورد","Posting Date":"التاريخ","Net Total":"الصافي","Grand Total":"الإجمالي","Total Tax":"الضريبة","Total Taxes":"الضريبة","Total":"الإجمالي","Outstanding Amount":"المتبقي","Paid Amount":"المدفوع","Due Date":"الاستحقاق","Item Code":"رمز الصنف","Item Name":"اسم الصنف","Item":"الصنف","Warehouse":"المستودع","Balance Qty":"الكمية","Balance Value":"القيمة","Valuation Rate":"سعر التقييم","Voucher Type":"نوع المستند","Voucher No":"رقم المستند","Account":"الحساب","Debit":"مدين","Credit":"دائن","Balance":"الرصيد","Party":"الطرف","Party Type":"نوع الطرف","Currency":"العملة","Company":"الشركة","Status":"الحالة","Territory":"المنطقة","Customer Group":"مجموعة العميل","Item Group":"فئة الصنف","Brand":"الماركة","Remarks":"ملاحظات","Mode of Payment":"طريقة الدفع","Cost Center":"مركز التكلفة","Debit (Transaction)":"مدين","Credit (Transaction)":"دائن","Balance (Dr - Cr)":"الرصيد","Against Account":"الحساب المقابل","Opening Qty":"كمية أول المدة","In Qty":"وارد","Out Qty":"صادر","Stock UOM":"الوحدة","Invoiced Amount":"المفوتر","Age (Days)":"العمر (أيام)","0-30":"0-30","31-60":"31-60","61-90":"61-90","91-120":"91-120","120-Above":"أكثر من 120","Posting Time":"الوقت","Qty":"الكمية","Rate":"السعر","Amount":"المبلغ","UOM":"الوحدة","Description":"الوصف","Tax Id":"الرقم الضريبي","Receivable Account":"حساب المدينين","Payable Account":"حساب الدائنين","Voucher Subtype":"النوع","Sales Invoice":"فاتورة المبيعات","Purchase Invoice":"فاتورة المشتريات"};
+function colLabel(l){ return AMY.lang==="ar" && COLAR[l]? COLAR[l] : l }
 function parseCol(c){
-  if(typeof c!=="string") return {label:c.label||c.fieldname, f:c.fieldname, type:c.fieldtype||"Data", options:c.options, width:c.width};
+  if(typeof c!=="string") return {label:colLabel(c.label||c.fieldname), f:c.fieldname, type:c.fieldtype||"Data", options:c.options, width:c.width};
   var p=c.split(":"), ty=(p[1]||"Data").split("/");
-  return {label:p[0], f:p[0], type:ty[0], options:ty[1], width:p[2]};
+  return {label:colLabel(p[0]), f:p[0], type:ty[0], options:ty[1], width:p[2]};
 }
 V.report = function(slug, root){
   var rc = AMY.cfg.reports[slug]; if(!rc){ root.appendChild(AMY.emptyBox(t("notFound"))); return }
@@ -146,9 +148,9 @@ V.report = function(slug, root){
     fbox.appendChild(h("div",{class:"field"}, h("label",{text:lb(f.l)}), c));
   });
   var runBtn = h("button",{class:"btn p",type:"button",onclick:run}, AMY.icon("rep"), t("run"));
-  var csvBtn = h("button",{class:"btn g",type:"button",onclick:function(){ csv() }}, AMY.icon("download"), t("export"));
-  root.appendChild(AMY.pageHeader({title:lb(rc.label), sub:rc.sub?lb(rc.sub):"", crumbs:[{text:AMY.lang==="ar"?"التقارير":"Reports",href:"#/reports"},{text:lb(rc.label)}], actions:[csvBtn, runBtn]}));
-  root.appendChild(h("div",{class:"card"}, fbox)); root.appendChild(h("div",{class:"mt"}, out));
+  var csvBtn = h("button",{class:"btn g",type:"button",onclick:function(){ csv() }}, AMY.icon("download"), t("export")), prBtn = h("button",{class:"btn g",type:"button",onclick:function(){ window.print() }}, AMY.icon("print"), t("print"));
+  root.appendChild(AMY.pageHeader({title:lb(rc.label), sub:rc.sub?lb(rc.sub):"", crumbs:[{text:AMY.lang==="ar"?"التقارير":"Reports",href:"#/reports"},{text:lb(rc.label)}], actions:[prBtn, csvBtn, runBtn]}));
+  root.appendChild(h("div",{class:"card noprint"}, fbox)); root.appendChild(h("div",{class:"mt"}, out));
   var last=null;
   function run(){
     AMY.clear(out); out.appendChild(h("div",{class:"card"},h("div",{class:"sk",style:"width:50%"}),h("div",{class:"sk",style:"width:90%;margin-top:14px"}),h("div",{class:"sk",style:"width:70%;margin-top:14px"})));
@@ -159,30 +161,56 @@ V.report = function(slug, root){
       var cols = (r.columns||[]).map(parseCol).filter(function(c){ return !c.hidden });
       var rows = (r.result||[]).filter(function(x){ return x!=null });
       if(!rows.length){ out.appendChild(h("div",{class:"card"},AMY.emptyBox(t("noData"),""))); return }
-      var th = h("tr"); cols.forEach(function(c,i){ th.appendChild(h("th",{class:/Currency|Float|Int|Percent/.test(c.type)?"end":"",text:c.label})) });
-      var tb = h("tbody");
-      rows.slice(0,500).forEach(function(row){
-        var isArr = Array.isArray(row), tr=h("tr");
-        cols.forEach(function(c,i){
-          var v = isArr? row[i] : row[c.f], num = /Currency|Float|Int|Percent/.test(c.type);
-          var td = h("td",{class:num?"num end":""});
-          if(v==null||v==="") td.appendChild(h("span",{class:"mut",text:"—"}));
-          else if(c.type==="Currency") td.appendChild(document.createTextNode(AMY.num(v,2)));
-          else if(c.type==="Float"||c.type==="Percent") td.appendChild(document.createTextNode(AMY.num(v,3)));
-          else if(c.type==="Int") td.appendChild(document.createTextNode(AMY.num(v,0)));
-          else if(c.type==="Date") td.appendChild(document.createTextNode(AMY.date(v)));
-          else {
-            var ldt = c.type==="Link"? c.options : (c.type==="Dynamic Link"? (function(){ var k = cols.findIndex(function(z){ return z.f===c.options }); return k>=0? (isArr? row[k] : row[c.options]) : "" })() : ""),
-                lc = ldt && AMY.cfg.docs[ldt], lp = ldt && AMY.boot.perms[ldt], sv = typeof v==="object"? "" : String(v);
-            if(lc && lp && lp.read && sv) td.appendChild(h("a",{class:"xl-link",href:"#/"+lc.slug+"/"+encodeURIComponent(sv),text:sv}));
-            else td.appendChild(document.createTextNode(sv));
-          }
-          tr.appendChild(td);
-        });
-        tb.appendChild(tr);
+      var isNum = function(c){ return /Currency|Float|Int|Percent/.test(c.type) };
+      var get = function(row,c,i){ return Array.isArray(row)? row[i] : row[c.f] };
+      var sortI = -1, sortD = 1, q = "";
+      var kp = h("div",{class:"rkpi"}), box = h("div"), qi = h("input",{class:"in",type:"search",placeholder:AMY.lang==="ar"?"بحث في النتائج":"Filter results",style:"max-width:280px"}), tmq;
+      qi.addEventListener("input",function(){ clearTimeout(tmq); tmq=setTimeout(function(){ q=qi.value.trim().toLowerCase(); paintTable() },150) });
+      /* summary strip: row count plus the totals of the first money columns */
+      kp.appendChild(h("div",null,h("span",{text:t("rows")}),h("b",{class:"num",text:AMY.num(rows.length,0)})));
+      var shownK = 0;
+      cols.forEach(function(c,i){
+        if(c.type!=="Currency" || shownK>=3) return;
+        var tot = rows.reduce(function(a,r){ return a+(Number(get(r,c,i))||0) },0);
+        kp.appendChild(h("div",null,h("span",{text:c.label}),h("b",{class:"num",text:AMY.num(tot,2)}))); shownK++;
       });
-      out.appendChild(h("div",{class:"card flush"}, h("div",{class:"scroll"}, h("table",{class:"tbl"}, h("thead",null,th), tb)),
-        h("div",{class:"foot"},h("span",{text:rows.length+" "+t("rows")+(rows.length>500?" ("+(AMY.lang==="ar"?"أول 500":"first 500")+")":"")}))));
+      out.appendChild(kp);
+      out.appendChild(h("div",{class:"rbar noprint"},qi,h("span",{class:"sp"})));
+      out.appendChild(box);
+      function paintTable(){
+        AMY.clear(box);
+        var list = rows.map(function(r,ix){ return {r:r,ix:ix} });
+        if(q) list = list.filter(function(o){ return cols.some(function(c,i){ var v = get(o.r,c,i); return v!=null && String(v).toLowerCase().indexOf(q)>=0 }) });
+        if(sortI>=0){ var sc = cols[sortI]; list.sort(function(x,y){ var a=get(x.r,sc,sortI), b=get(y.r,sc,sortI); if(isNum(sc)) return ((Number(a)||0)-(Number(b)||0))*sortD; return String(a==null?"":a).localeCompare(String(b==null?"":b))*sortD }) }
+        var th = h("tr"); cols.forEach(function(c,i){ th.appendChild(h("th",{class:(isNum(c)?"end ":"")+"srt"+(sortI===i?" on":""),onclick:function(){ if(sortI===i) sortD=-sortD; else { sortI=i; sortD=1 } paintTable() }},c.label,sortI===i? h("i",{class:"sa",text:sortD>0?"▲":"▼"}) : null)) });
+        var tb = h("tbody"), sums = cols.map(function(){ return 0 });
+        list.slice(0,500).forEach(function(o){
+          var row = o.r, isArr = Array.isArray(row), tr=h("tr");
+          cols.forEach(function(c,i){
+            var v = isArr? row[i] : row[c.f], num = isNum(c);
+            if(c.type==="Currency" && v!=null && v!=="") sums[i] += Number(v)||0;
+            var td = h("td",{class:num?"num end":""});
+            if(v==null||v==="") td.appendChild(h("span",{class:"mut",text:"—"}));
+            else if(c.type==="Currency"){ var nv = Number(v); td.appendChild(h("span",{class:nv<0?"neg":"",text:AMY.num(v,2)})) }
+            else if(c.type==="Float"||c.type==="Percent") td.appendChild(document.createTextNode(AMY.num(v,3)));
+            else if(c.type==="Int") td.appendChild(document.createTextNode(AMY.num(v,0)));
+            else if(c.type==="Date") td.appendChild(document.createTextNode(AMY.date(v)));
+            else {
+              var ldt = c.type==="Link"? c.options : (c.type==="Dynamic Link"? (function(){ var k = cols.findIndex(function(z){ return z.f===c.options }); return k>=0? (isArr? row[k] : row[c.options]) : "" })() : ""),
+                  lc = ldt && AMY.cfg.docs[ldt], lp = ldt && AMY.boot.perms[ldt], sv = typeof v==="object"? "" : String(v);
+              if(lc && lp && lp.read && sv) td.appendChild(h("a",{class:"xl-link",href:"#/"+lc.slug+"/"+encodeURIComponent(sv),text:sv}));
+              else td.appendChild(document.createTextNode(sv));
+            }
+            tr.appendChild(td);
+          });
+          tb.appendChild(tr);
+        });
+        var hasSum = cols.some(function(c){ return c.type==="Currency" });
+        var tf = hasSum && list.length<=500 ? h("tfoot",null,h("tr",null,cols.map(function(c,i){ return h("td",{class:c.type==="Currency"?"num end":"",text:c.type==="Currency"? AMY.num(sums[i],2) : (i===0? (AMY.lang==="ar"?"الإجمالي":"Total") : "")}) }))) : null;
+        box.appendChild(h("div",{class:"card flush rpt"}, h("div",{class:"scroll"}, h("table",{class:"tbl"}, h("thead",null,th), tb, tf)),
+          h("div",{class:"foot"},h("span",{text:list.length+" "+t("rows")+(list.length>500?" ("+(AMY.lang==="ar"?"أول 500":"first 500")+")":"")}))));
+      }
+      paintTable();
     }).catch(function(e){ AMY.clear(out); out.appendChild(h("div",{class:"err",text:e.message||t("err")})); AMY.fail(e) });
   }
   function csv(){
@@ -195,12 +223,28 @@ V.report = function(slug, root){
   run();
 };
 V.reportsHub = function(root){
-  AMY.setTitle(AMY.lang==="ar"?"التقارير":"Reports");
-  root.appendChild(AMY.pageHeader({title:AMY.lang==="ar"?"التقارير":"Reports", sub:AMY.lang==="ar"?"اختر تقريرًا لعرضه أو تصديره.":"Pick a report to view or export."}));
-  var hub=h("div",{class:"hub"});
-  Object.keys(AMY.cfg.reports).forEach(function(k){ var r=AMY.cfg.reports[k];
-    hub.appendChild(h("button",{class:"hubi",type:"button",onclick:function(){ AMY.go("/report/"+k) }}, h("span",{class:"chip"},AMY.icon(r.icon||"rep")), h("div",null,h("b",{text:lb(r.label)}),h("span",{class:"d",text:lb(r.sub||"")})))) });
-  root.appendChild(hub);
+  var ar = AMY.lang==="ar";
+  AMY.setTitle(ar?"التقارير":"Reports");
+  root.appendChild(AMY.pageHeader({title:ar?"التقارير":"Reports", sub:ar?"اختر تقريرًا لعرضه أو طباعته أو تصديره.":"Pick a report to view, print or export."}));
+  if(AMY.boot.perms["Sales Invoice"] && AMY.boot.perms["Sales Invoice"].read && AMY.boot.perms["Purchase Invoice"] && AMY.boot.perms["Purchase Invoice"].read){
+    root.appendChild(h("a",{class:"rfeat",href:"#/vat"}, h("div",null,h("b",{text:ar?"الإقرار الضريبي":"VAT return"}),h("span",{text:ar?"ضريبة المخرجات والمدخلات وصافي المستحق للهيئة، جاهز للمراجعة والتقديم.":"Output and input VAT and the net due to ZATCA, ready to review and file."})),
+      h("span",{class:"go"},ar?"افتح الإقرار":"Open the return",AMY.icon(ar?"chevL":"chevR"))));
+  }
+  var groups = [
+    ["sales",ar?"المبيعات والمشتريات":"Sales & purchases",["sales-register","purchase-register","receivable","payable"]],
+    ["acc",ar?"المحاسبة":"Accounting",["profit-loss","general-ledger"]],
+    ["stock",ar?"المخزون":"Stock",["stock-balance"]]];
+  var used = {};
+  groups.forEach(function(g){
+    var ks = g[2].filter(function(k){ return AMY.cfg.reports[k] }); if(!ks.length) return;
+    root.appendChild(h("h3",{class:"rh",text:g[1]}));
+    var hub=h("div",{class:"hub"});
+    ks.forEach(function(k){ used[k]=1; var r=AMY.cfg.reports[k];
+      hub.appendChild(h("button",{class:"hubi",type:"button",onclick:function(){ AMY.go("/report/"+k) }}, h("span",{class:"chip"},AMY.icon(r.icon||"rep")), h("div",null,h("b",{text:lb(r.label)}),h("span",{class:"d",text:lb(r.sub||"")})))) });
+    root.appendChild(hub);
+  });
+  var rest = Object.keys(AMY.cfg.reports).filter(function(k){ return !used[k] });
+  if(rest.length){ var hb=h("div",{class:"hub",style:"margin-top:34px"}); rest.forEach(function(k){ var r=AMY.cfg.reports[k]; hb.appendChild(h("button",{class:"hubi",type:"button",onclick:function(){ AMY.go("/report/"+k) }}, h("span",{class:"chip"},AMY.icon(r.icon||"rep")), h("div",null,h("b",{text:lb(r.label)}),h("span",{class:"d",text:lb(r.sub||"")})))) }); root.appendChild(hb) }
 };
 
 /* =============================================================== USERS */

@@ -48,6 +48,9 @@ AMY.dispatch = function(p, root){
   if(s[0]==="report") return V.report(s[1], root);
   if(s[0]==="users"){ if(!AMY.boot.is_admin) return root.appendChild(AMY.emptyBox(t("noperm"),"")); return V.users(root) }
   if(s[0]==="settings") return V.settings(root);
+  if(s[0]==="chart"){ if(!can("Account")) return root.appendChild(AMY.emptyBox(t("noperm"),"")); return V.coa(root) }
+  if(s[0]==="tax-types"){ if(!can("Sales Taxes and Charges Template")) return root.appendChild(AMY.emptyBox(t("noperm"),"")); return V.taxTypes(root) }
+  if(s[0]==="vat"){ if(!can("Sales Invoice")||!can("Purchase Invoice")) return root.appendChild(AMY.emptyBox(t("noperm"),"")); return V.vat(root) }
   if(s[0]==="expenses"){ if(!can("Journal Entry")) return root.appendChild(AMY.emptyBox(t("noperm"),"")); return V.expenses(root, s[1]==="new") }
   if(s[0]==="e-invoicing"){ if(!AMY.boot.is_admin||!AMY.boot.apps.zatca) return root.appendChild(AMY.emptyBox(t("noperm"),"")); return V.einvoice(root) }
   if(s[0]==="setup"){ if(!AMY.boot.is_admin) return root.appendChild(AMY.emptyBox(t("noperm"),"")); return V.setup(root) }

@@ -23,6 +23,11 @@ ALLOWED_MODULES = ["Accounts", "Selling", "Buying", "Stock"]
 def after_install():
     apply_branding()
     try:
+        from amy_pos import books
+        books.ensure_custom_fields()
+    except Exception:
+        frappe.log_error(title="AMY POS: VAT class field")
+    try:
         from amy_pos.setup import defaults
         defaults.apply()
     except Exception:
@@ -32,6 +37,11 @@ def after_install():
 
 def after_migrate():
     apply_branding()
+    try:
+        from amy_pos import books
+        books.ensure_custom_fields()
+    except Exception:
+        frappe.log_error(title="AMY POS: VAT class field")
     frappe.db.commit()
 
 

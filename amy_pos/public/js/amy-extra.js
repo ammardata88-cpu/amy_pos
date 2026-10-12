@@ -301,7 +301,7 @@ AMY.cfg.settings.unshift({to:"/setup",icon:"check",l:["التهيئة السري
       out.push({t:AMY.lb(c.plural), hint:ar()?"صفحة":"Page", go:"/"+c.slug, icon:c.icon||"list"});
       if(p.create && !c.noNew) out.push({t:AMY.lb(c.newLabel||c.label), hint:ar()?"إنشاء":"Create", go:"/"+c.slug+"/new", icon:"plus"});
     });
-    [["/reports",["التقارير","Reports"]],["/settings",["الإعدادات","Settings"]],["/users",["المستخدمون والصلاحيات","Users & roles"]],["/setup",["التهيئة السريعة","Quick setup"]],["/expenses",["المصروفات","Expenses"]],["/e-invoicing",["الفوترة الإلكترونية","E-invoicing"]]].forEach(function(x){
+    [["/reports",["التقارير","Reports"]],["/settings",["الإعدادات","Settings"]],["/users",["المستخدمون والصلاحيات","Users & roles"]],["/setup",["التهيئة السريعة","Quick setup"]],["/expenses",["المصروفات","Expenses"]],["/chart",["شجرة الحسابات","Chart of accounts"]],["/vat",["الإقرار الضريبي","VAT return"]],["/tax-types",["أنواع الضريبة","Tax types"]],["/e-invoicing",["الفوترة الإلكترونية","E-invoicing"]]].forEach(function(x){
       if((x[0]==="/users"||x[0]==="/setup"||x[0]==="/e-invoicing") && !AMY.boot.is_admin) return;
       out.push({t:AMY.lb(x[1]), hint:ar()?"صفحة":"Page", go:x[0], icon:x[0]==="/reports"?"rep":"set"});
     });
