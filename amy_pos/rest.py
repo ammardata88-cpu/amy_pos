@@ -25,6 +25,7 @@ ALLOWED = {
     "Sales Taxes and Charges Template", "Purchase Taxes and Charges Template",
     "Pricing Rule", "POS Profile", "POS Opening Shift", "POS Closing Shift",
     "Sales Invoice Additional Fields", "Quotation", "Sales Order", "Purchase Order",
+    "Batch", "Product Bundle", "Payment Terms Template", "Item Tax Template",
 }
 
 INVOICES = ("Sales Invoice", "Purchase Invoice")
@@ -151,6 +152,7 @@ def bootstrap():
         "logo": frappe.get_cached_value("Company", company, "company_logo") if company else None,
         "perms": perms,
         "apps": {"pos_next": "pos_next" in apps, "zatca": "ksa_compliance" in apps},
+        "industry": frappe.db.get_default("amy_industry") or "retail",
     }
 
 
@@ -293,16 +295,16 @@ def new_defaults(doctype):
 
 
 @frappe.whitelist()
-def item_details(item_code, doctype, party=None, qty=1, warehouse=None, price_list=None, currency=None):
+def item_details(item_code, doctype, party=None, qty=1, warehouse=None, price_list=None, currency=None, uom=None):
     if doctype not in TXN:
         frappe.throw(_("Not permitted"), frappe.PermissionError)
     _need("Item", "read")
     frappe.get_doc("Item", item_code).check_permission("read")
     """Price, UOM, accounts and stock for one item row."""
-    return _item_details(item_code, doctype, party, qty, warehouse, price_list, currency)
+    return _item_details(item_code, doctype, party, qty, warehouse, price_list, currency, uom)
 
 
-def _item_details(item_code, doctype, party=None, qty=1, warehouse=None, price_list=None, currency=None):
+def _item_details(item_code, doctype, party=None, qty=1, warehouse=None, price_list=None, currency=None, uom=None):
     company = _company()
     sales = doctype in ("Sales Invoice", "Sales Order", "Quotation", "Delivery Note")
     currency = currency or frappe.get_cached_value("Company", company, "default_currency")
@@ -315,6 +317,8 @@ def _item_details(item_code, doctype, party=None, qty=1, warehouse=None, price_l
         "selling_price_list" if sales else "buying_price_list": price_list,
         "update_stock": 1,
     }
+    if uom:
+        args["uom"] = uom
     try:
         from erpnext.stock.get_item_details import get_item_details
         det = get_item_details(args)
@@ -328,12 +332,33 @@ def _item_details(item_code, doctype, party=None, qty=1, warehouse=None, price_l
             item = frappe.get_cached_doc("Item", item_code)
             rate = flt(item.standard_rate) if sales else flt(item.last_purchase_rate or item.valuation_rate)
         out["rate"] = rate
+        out.update(_batch_hint(item_code, sales, out.get("warehouse") or warehouse, flt(qty) or 1))
         return out
     except Exception:
         frappe.clear_last_message()
         item = frappe.get_cached_doc("Item", item_code)
         return {"item_name": item.item_name, "uom": item.stock_uom, "stock_uom": item.stock_uom,
                 "conversion_factor": 1, "rate": flt(item.standard_rate), "qty": flt(qty) or 1}
+
+
+def _batch_hint(item_code, sales, warehouse, qty):
+    """For batch items: the batch to sell first (earliest expiry), or just the flag when buying."""
+    try:
+        item = frappe.get_cached_doc("Item", item_code)
+        if not cint(item.has_batch_no):
+            return {}
+        out = {"has_batch_no": 1, "has_expiry_date": cint(item.has_expiry_date)}
+        if sales and warehouse:
+            from erpnext.stock.doctype.batch.batch import get_batch_no
+
+            b = get_batch_no(item_code, warehouse, qty)
+            if b:
+                out["batch_no"] = b
+                out["batch_expiry"] = str(frappe.db.get_value("Batch", b, "expiry_date") or "")
+        return out
+    except Exception:
+        frappe.clear_last_message()
+        return {}
 
 
 @frappe.whitelist()
@@ -394,7 +419,7 @@ def _prepare(doc, extras=None):
         doc.set("items", rows)
         for row in doc.get("items"):
             det = _item_details(row.item_code, dt, doc.get(party_f), row.get("qty") or 1,
-                                row.get("warehouse") or doc.get("set_warehouse"), plist, doc.currency)
+                                row.get("warehouse") or doc.get("set_warehouse"), plist, doc.currency, row.get("uom"))
             for k, v in det.items():
                 if not row.meta.has_field(k):
                     continue
@@ -403,6 +428,8 @@ def _prepare(doc, extras=None):
                         row.set(k, v)
                 elif row.get(k) in (None, ""):
                     row.set(k, v)
+            if row.get("batch_no") and row.meta.has_field("use_serial_batch_fields"):
+                row.use_serial_batch_fields = 1
             if dt == "Sales Order" and not row.get("delivery_date"):
                 row.delivery_date = doc.delivery_date
             if dt == "Purchase Order" and not row.get("schedule_date"):
@@ -858,6 +885,10 @@ def related(doctype, name):
                                   fields=["sum(outstanding_amount) as due", "count(name) as n"])
             summary = [{"k": "billed", "v": flt(tot[0].total) if tot else 0, "n": cint(tot[0].n) if tot else 0},
                        {"k": "due", "v": flt(due[0].due) if due else 0, "n": cint(due[0].n) if due else 0}]
+            if sales:
+                lim = frappe.db.get_value("Customer Credit Limit", {"parent": name, "company": _company()}, "credit_limit")
+                if flt(lim):
+                    summary.append({"k": "limit", "v": flt(lim), "n": 0})
         pays = frappe.get_all("Payment Entry", filters={"party_type": doctype, "party": name, "docstatus": 1},
                               pluck="name", order_by="creation desc", limit_page_length=8)
         add("payments", "Payment Entry", _brief("Payment Entry", pays, "posting_date", "paid_amount"))

@@ -156,6 +156,7 @@ V.report = function(slug, root){
     AMY.clear(out); out.appendChild(h("div",{class:"card"},h("div",{class:"sk",style:"width:50%"}),h("div",{class:"sk",style:"width:90%;margin-top:14px"}),h("div",{class:"sk",style:"width:70%;margin-top:14px"})));
     var f = {}; for(var k in vals) if(vals[k]!=="" && vals[k]!=null) f[k]=vals[k];
     if(rc.extra) for(var e in rc.extra) f[e]=rc.extra[e];
+    (rc.filters||[]).forEach(function(fl){ if(fl.list && f[fl.f]) f[fl.f]=JSON.stringify([f[fl.f]]) });
     AMY.call("frappe.desk.query_report.run",{report_name:rc.name,filters:f}).then(function(r){
       last = r; AMY.clear(out);
       var cols = (r.columns||[]).map(parseCol).filter(function(c){ return !c.hidden });
@@ -231,7 +232,7 @@ V.reportsHub = function(root){
       h("span",{class:"go"},ar?"افتح الإقرار":"Open the return",AMY.icon(ar?"chevL":"chevR"))));
   }
   var groups = [
-    ["sales",ar?"المبيعات والمشتريات":"Sales & purchases",["sales-register","purchase-register","receivable","payable"]],
+    ["sales",ar?"المبيعات والمشتريات":"Sales & purchases",["sales-register","purchase-register","receivable","payable","customer-statement","supplier-statement"]],
     ["acc",ar?"المحاسبة":"Accounting",["profit-loss","general-ledger"]],
     ["stock",ar?"المخزون":"Stock",["stock-balance"]]];
   var used = {};

@@ -400,3 +400,32 @@ def print_data(doctype, name):
             }
     out["zatca"] = z
     return {"doc": out, "company": _company_card(doc.company), "buyer_vat": d.get("tax_id")}
+
+
+# ================================================================ business type
+INDUSTRIES = ("retail", "restaurant", "pharmacy", "wholesale")
+
+
+@frappe.whitelist()
+def industry_set(industry):
+    """Remember the business type and apply the few server-side switches it needs."""
+    frappe.only_for("System Manager")
+    if industry not in INDUSTRIES:
+        frappe.throw(_("Unknown business type"))
+    frappe.db.set_default("amy_industry", industry)
+    changed = []
+    ss = frappe.get_doc("Stock Settings")
+    if industry == "restaurant" and ss.meta.has_field("allow_negative_stock") and not cint(ss.allow_negative_stock):
+        ss.allow_negative_stock = 1  # dishes are sold before ingredients are counted
+        changed.append("allow_negative_stock")
+    if industry == "pharmacy" and ss.meta.has_field("use_serial_batch_fields") and not cint(ss.use_serial_batch_fields):
+        ss.use_serial_batch_fields = 1  # lets invoice rows carry the batch number directly
+        changed.append("use_serial_batch_fields")
+    if industry == "pharmacy" and ss.meta.has_field("auto_create_serial_and_batch_bundle_for_outward") \
+            and not cint(ss.auto_create_serial_and_batch_bundle_for_outward):
+        ss.auto_create_serial_and_batch_bundle_for_outward = 1
+        changed.append("auto_create_serial_and_batch_bundle_for_outward")
+    if changed:
+        ss.save()
+    frappe.db.commit()
+    return {"industry": industry, "changed": changed}

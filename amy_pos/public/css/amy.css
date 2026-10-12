@@ -410,3 +410,14 @@ a.lnkc,.lnkc{cursor:pointer;color:inherit;display:block}
 @media print{.rpt .scroll{overflow:visible!important;max-height:none!important}.rkpi{break-inside:avoid}.rpt thead th{position:static}}
 
 .rh{margin:34px 0 10px;font-size:17px;font-weight:600}
+
+/* business type */
+.typegrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(225px,1fr));gap:0;border:1px solid var(--rule);border-radius:8px;overflow:hidden;background:var(--paper)}
+.typec{display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:start;border:0;border-inline-end:1px solid var(--rule);background:none;padding:22px 24px;cursor:pointer;position:relative}
+.typec:last-child{border-inline-end:0}.typec:hover{background:var(--hover)}
+.typec b{font-size:19px}.typec .d{color:var(--mut)}
+.typec ul{margin:10px 0 14px;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px}
+.typec li{padding-inline-start:18px;position:relative;font-size:13.5px;color:var(--ink2)}
+.typec li::before{content:"";position:absolute;inset-inline-start:0;top:.7em;width:8px;height:2px;background:var(--brand2)}
+.typec.on{background:var(--brand-l);box-shadow:inset 0 3px 0 var(--brand)}
+.typec .pill{margin-top:auto}

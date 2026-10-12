@@ -93,7 +93,7 @@ V.list = function(dt, root, p){
 };
 
 /* =============================================================== FORM */
-var KEYS_ITEM = ["item_name","description","uom","stock_uom","conversion_factor","price_list_rate","rate","discount_percentage","warehouse","income_account","expense_account","cost_center","item_tax_template"];
+var KEYS_ITEM = ["item_name","description","uom","stock_uom","conversion_factor","price_list_rate","rate","discount_percentage","warehouse","income_account","expense_account","cost_center","item_tax_template","batch_no"];
 
 V.form = function(dt, name, p, root){
   var cfg = cfgOf(dt), isNew = name==="new";
@@ -209,6 +209,7 @@ V.form = function(dt, name, p, root){
             } else {
               var cd = Object.assign({}, c, {dt: c.dt, onRow:function(val, row){
                 if(c.f==="item_code") return;
+                if(c.f==="uom" && row.item_code && cfg.invoice){ itemPicked(row, row.item_code, draw, true); return }
                 if(["qty","rate","discount_percentage"].indexOf(c.f)>=0){ recalcRow(row); if(row._amountEl) row._amountEl.textContent = AMY.money(row.amount||0); schedulePreview() }
                 if(tb.onRowChange) tb.onRowChange(c.f, row, form);
               }, after:function(val, it, row){
@@ -233,12 +234,14 @@ V.form = function(dt, name, p, root){
       tableEls[tb.f] = {redraw:draw};
       return box;
     }
-    function itemPicked(row, code, redraw){
+    function itemPicked(row, code, redraw, keepUom){
       if(!cfg.invoice){ if(cfg.itemPicked) cfg.itemPicked(row, code, doc, redraw); return }
       var party = doc.customer || doc.supplier || doc.party_name;
       AMY.rest("item_details",{item_code:code,doctype:dt,party:party,qty:row.qty||1,warehouse:doc.set_warehouse||null,
-        price_list:doc.selling_price_list||doc.buying_price_list||null,currency:doc.currency}).then(function(d){
+        price_list:doc.selling_price_list||doc.buying_price_list||null,currency:doc.currency,uom:keepUom? row.uom : null}).then(function(d){
         KEYS_ITEM.forEach(function(k){ if(d[k]!=null) row[k]=d[k] });
+        row._hasBatch = d.has_batch_no ? 1 : 0; row._expiry = d.batch_expiry || "";
+        if(d.has_batch_no && !d.batch_no && cfg.invoice) row.batch_no = row.batch_no || "";
         row.item_code = code; row.qty = row.qty||1; row._stock = d.actual_qty; recalcRow(row); redraw(); schedulePreview();
       }).catch(AMY.fail);
     }
