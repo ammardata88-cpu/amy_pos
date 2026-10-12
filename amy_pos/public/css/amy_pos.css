@@ -1,0 +1,11 @@
+/* AMY POS brand colours (amytech.net) */
+:root {
+	--primary: #10afd7;
+	--primary-color: #10afd7;
+}
+.btn-primary,
+.btn-primary:hover,
+.btn-primary:focus {
+	background: linear-gradient(135deg, #10afd7 0%, #14b8a6 100%);
+	border-color: transparent;
+}
