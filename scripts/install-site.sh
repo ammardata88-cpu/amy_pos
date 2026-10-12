@@ -8,7 +8,7 @@ cd "$BENCH_DIR"
 installed="$(bench --site "$SITE" list-apps)"
 echo "$installed" | grep -q '^ksa_compliance' || bench --site "$SITE" install-app ksa_compliance
 echo "$installed" | grep -q '^amy_pos'        || bench --site "$SITE" install-app amy_pos
-bench --site "$SITE" execute amy_pos.setup.install.setup_company_defaults
+bench --site "$SITE" execute amy_pos.setup.defaults.apply
 [ "${AMY_CONSOLE:-1}" = "1" ] && bench --site "$SITE" set-config amy_console 1
 bench --site "$SITE" clear-cache
 echo "AMY POS is ready on $SITE"

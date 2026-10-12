@@ -126,7 +126,7 @@ docs["Payment Entry"] = {
    {f:"reference_date",t:"date",l:["تاريخ المرجع","Reference date"]},
    {f:"remarks",t:"text",l:["ملاحظات","Notes"],span:4}]},
   {title:["الفواتير المسددة","Settled invoices"],show:function(d){ return (d.references||[]).length>0 },fields:[{t:"table",f:"references"}]}],
- tables:[{f:"references",l:["الفواتير","Invoices"],fixed:1,key:"reference_name",cols:[
+ tables:[{f:"references",l:["الفواتير","Invoices"],fixed:1,key:"reference_name",open:function(r){ var c = AMY.cfg.docs[r.reference_doctype]; return c && r.reference_name? "/"+c.slug+"/"+encodeURIComponent(r.reference_name) : "" },cols:[
   {f:"reference_doctype",t:"data",l:["النوع","Type"],ro:1,w:"18%"},{f:"reference_name",t:"data",l:["الفاتورة","Invoice"],ro:1,w:"24%"},
   {f:"total_amount",t:"money",l:["الإجمالي","Total"],ro:1,w:"18%"},{f:"outstanding_amount",t:"money",l:["المتبقي","Outstanding"],ro:1,w:"18%"},
   {f:"allocated_amount",t:"money",l:["المسدد الآن","Allocated"],w:"18%"}]}],

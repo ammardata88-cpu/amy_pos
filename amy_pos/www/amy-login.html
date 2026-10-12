@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
+<meta name="referrer" content="same-origin">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; form-action 'self'; base-uri 'self'; object-src 'none'">
 <title>AMY - تسجيل الدخول</title>
 <link rel="icon" href="/assets/amy_pos/images/amy-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -101,7 +103,7 @@ $("f").onsubmit=function(ev){
   fetch("/api/method/login",{method:"POST",credentials:"same-origin",headers:{"Accept":"application/json","Content-Type":"application/x-www-form-urlencoded"},body:body.toString()})
   .then(function(r){ return r.json().catch(function(){ return {} }).then(function(j){ return {ok:r.ok,j:j} }) })
   .then(function(x){
-    if(x.ok){ var n = new URLSearchParams(location.search).get("next"); location.href = (n && n.charAt(0)==="/" && n.charAt(1)!=="/")? n : "/amy"; return }
+    if(x.ok){ var n = new URLSearchParams(location.search).get("next"); location.href = (n && /^\/(?![\/\\])/.test(n))? n : "/amy"; return }
     b.disabled=false; msg("err", T[lang].bad);
   }).catch(function(){ b.disabled=false; msg("err", T[lang].net) });
 };

@@ -14,7 +14,7 @@ var I = {
   yes:"نعم، تابع",no:"تراجع",draft:"مسودة",submittedS:"معتمد",cancelledS:"ملغى",
   addRow:"إضافة سطر",item:"الصنف",qty:"الكمية",rate:"السعر",amount:"الإجمالي",uom:"الوحدة",warehouse:"المستودع",
   net:"الإجمالي قبل الضريبة",tax:"الضريبة",grand:"الإجمالي النهائي",discount:"الخصم",
-  returnDoc:"مرتجع",makePay:"تسجيل دفعة",dup:"نسخ",pickOne:"اختر…",
+  openRec:"فتح السجل",returnDoc:"مرتجع",makePay:"تسجيل دفعة",dup:"نسخ",pickOne:"اختر…",
   home:"الرئيسية",desk:"النظام الكامل",pos:"الكاشير",signout:"تسجيل الخروج",hello:"أهلاً، ",
   err:"حدث خطأ غير متوقع",req:"هذا الحقل مطلوب",notFound:"غير موجود",notFoundSub:"قد يكون المستند حُذف أو ليس لديك صلاحية عرضه.",
   upload:"رفع صورة",remove:"إزالة",enabled:"مفعّل",disabled:"موقوف",page:"صفحة",export:"تصدير",
@@ -26,7 +26,7 @@ var I = {
   yes:"Yes, continue",no:"Go back",draft:"Draft",submittedS:"Submitted",cancelledS:"Cancelled",
   addRow:"Add row",item:"Item",qty:"Qty",rate:"Rate",amount:"Amount",uom:"Unit",warehouse:"Warehouse",
   net:"Subtotal",tax:"Tax",grand:"Total",discount:"Discount",
-  returnDoc:"Return",makePay:"Record payment",dup:"Duplicate",pickOne:"Select…",
+  openRec:"Open record",returnDoc:"Return",makePay:"Record payment",dup:"Duplicate",pickOne:"Select…",
   home:"Home",desk:"Full system",pos:"POS",signout:"Sign out",hello:"Hello, ",
   err:"Something went wrong",req:"This field is required",notFound:"Not found",notFoundSub:"The document may have been deleted, or you may not have access to it.",
   upload:"Upload image",remove:"Remove",enabled:"Active",disabled:"Inactive",page:"Page",export:"Export",
@@ -155,7 +155,8 @@ AMY.fmt = function(type, v, row, cur){
 };
 
 /* ---------- API ---------- */
-function plain(html){ var d=document.createElement("div"); d.innerHTML=html; return (d.textContent||"").trim() }
+/* HTML to text without ever building live elements: a DOMParser document runs no scripts and loads no images. */
+function plain(html){ try{ return (new DOMParser().parseFromString(String(html),"text/html").body.textContent||"").trim() }catch(e){ return "" } }
 function errMsg(j){
   try{
     if(j._server_messages){
@@ -173,7 +174,7 @@ AMY.call = function(method, args){
     body:JSON.stringify(args||{})})
   .then(function(r){
     return r.json().catch(function(){return {}}).then(function(j){
-      if(r.status===401 || (r.status===403 && !j._server_messages)){ location.href="/login?redirect-to="+encodeURIComponent("/amy"+location.hash); throw {silent:1} }
+      if(r.status===401 || (r.status===403 && !j._server_messages)){ location.href="/amy-login?next="+encodeURIComponent("/amy"+location.hash); throw {silent:1} }
       if(!r.ok){ var e=new Error(errMsg(j)); e.status=r.status; throw e }
       return j.message;
     });
@@ -219,9 +220,15 @@ AMY.drawer = function(title, build){
 AMY.link = function(o){
   var val = o.value || "", dd = h("div",{class:"dd"}), timer, hl=-1, items=[];
   var inp = h("input",{class:"in",type:"text",autocomplete:"off",placeholder:o.placeholder||AMY.t("pickOne"),value:val,disabled:o.disabled});
-  var wrap = h("div",{class:"lk"}, inp, dd);
+  var go = h("a",{class:"lkgo hide",target:"_self",title:AMY.t("openRec")}, AMY.icon("chevL"));
+  var wrap = h("div",{class:"lk"}, inp, go, dd);
+  function target(){
+    var dt = typeof o.doctype==="function"? o.doctype() : o.doctype, c = AMY.cfg.docs && AMY.cfg.docs[dt], p = AMY.boot && AMY.boot.perms[dt];
+    return (c && p && p.read && val)? "#/"+c.slug+"/"+encodeURIComponent(val) : "";
+  }
+  function showGo(){ var t = target(); go.classList[t?"remove":"add"]("hide"); if(t) go.setAttribute("href",t); wrap.classList[t?"add":"remove"]("hasgo") }
   function open(v){ wrap.classList[v?"add":"remove"]("open") }
-  function pick(it){ val = it.value; inp.value = it.value; open(false); if(o.onChange) o.onChange(val, it) }
+  function pick(it){ val = it.value; inp.value = it.value; open(false); showGo(); if(o.onChange) o.onChange(val, it) }
   function render(list){
     AMY.clear(dd); items=list; hl=-1;
     if(!list.length){ dd.appendChild(h("div",{class:"none",text:AMY.t("noData")})); return }
@@ -240,7 +247,7 @@ AMY.link = function(o){
   }
   inp.addEventListener("focus",function(){ inp.select(); fetchList() });
   inp.addEventListener("input",function(){ clearTimeout(timer); timer=setTimeout(fetchList,220) });
-  inp.addEventListener("blur",function(){ setTimeout(function(){ open(false); if(inp.value!==val){ if(inp.value===""){ val=""; if(o.onChange) o.onChange("",null) } else inp.value=val } },150) });
+  inp.addEventListener("blur",function(){ setTimeout(function(){ open(false); if(inp.value!==val){ if(inp.value===""){ val=""; showGo(); if(o.onChange) o.onChange("",null) } else inp.value=val } },150) });
   inp.addEventListener("keydown",function(e){
     var b = dd.querySelectorAll("button");
     if(e.key==="ArrowDown"||e.key==="ArrowUp"){ e.preventDefault(); if(!b.length) return; hl=(hl+(e.key==="ArrowDown"?1:-1)+b.length)%b.length; b.forEach(function(x,i){ x.classList[i===hl?"add":"remove"]("on") }); b[hl].scrollIntoView({block:"nearest"}) }
@@ -248,7 +255,8 @@ AMY.link = function(o){
     else if(e.key==="Escape") open(false);
   });
   wrap.get = function(){ return val };
-  wrap.set = function(v){ val=v||""; inp.value=val };
+  wrap.set = function(v){ val=v||""; inp.value=val; showGo() };
+  setTimeout(showGo,0);
   wrap.input = inp;
   return wrap;
 };

@@ -307,3 +307,18 @@ kbd{font-family:inherit;font-size:11px;color:var(--mut);border:1px solid var(--r
 .palno{padding:26px;text-align:center;color:var(--mut)}
 [dir=rtl] .kpi .v{text-align:right}
 @media(max-width:900px){.palbtn{min-width:0;flex:none;width:36px;padding:0;justify-content:center}.palbtn span,.palbtn kbd{display:none}}
+
+.lk .lkgo{position:absolute;inset-inline-end:8px;top:50%;transform:translateY(-50%);width:24px;height:24px;display:grid;place-items:center;color:var(--faint);border-radius:5px}
+.lk .lkgo:hover{color:var(--brand);background:var(--brand-l)}
+.lk .lkgo svg{width:15px;height:15px}
+[dir=ltr] .lkgo svg,[dir=ltr] .itbl a.x svg{transform:scaleX(-1)}
+.lk.hasgo>.in{padding-inline-end:36px}
+.itbl a.x{display:inline-grid;place-items:center;color:var(--faint);padding:8px;border-radius:6px}
+.itbl a.x:hover{color:var(--brand);background:var(--brand-l)}
+a.lnkc,.lnkc{cursor:pointer;color:inherit;display:block}
+.kpi.lnkc:hover .v,.split.lnkc:hover .row b,.hb li.lnkc:hover .r span:first-child,.leg li.lnkc:hover span{color:var(--brand)}
+.leg li.lnkc{display:flex}
+.xl-link{color:var(--brand);font-weight:500}
+.xl-link:hover{text-decoration:underline}
+.sm .kpi .v{font-size:26px}
+.rel{margin-top:36px}

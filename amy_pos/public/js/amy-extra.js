@@ -354,4 +354,39 @@ AMY.cfg.settings.unshift({to:"/setup",icon:"check",l:["التهيئة السري
   }
   document.addEventListener("keydown",function(e){ if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==="k"){ e.preventDefault(); if(!document.querySelector(".pal")) open() } });
 })();
+
+/* ---------- related documents: everything a record is tied to, one click away ---------- */
+var REL = {
+ payments:["الدفعات والمقبوضات","Payments"], returns:["المرتجعات","Returns"], original:["الفاتورة الأصلية","Original invoice"], source:["المستند المصدر","Source document"],
+ zatca:["الفوترة الإلكترونية","E-invoicing"], orders:["أوامر","Orders"], invoices:["الفواتير","Invoices"], quotes:["عروض الأسعار","Quotations"],
+ sold:["آخر مبيعات المنتج","Recent sales"], bought:["آخر مشتريات المنتج","Recent purchases"], shifts:["آخر الورديات","Recent shifts"]};
+AMY.relatedPanel = function(dt, doc, root){
+  if(["Sales Invoice","Purchase Invoice","Sales Order","Purchase Order","Quotation","Customer","Supplier","Item","POS Profile"].indexOf(dt)<0) return;
+  var ar = AMY.lang==="ar", host = h("div");
+  root.appendChild(host);
+  AMY.rest("related",{doctype:dt,name:doc.name}).then(function(r){
+    var cur = (AMY.boot && AMY.boot.currency) || "";
+    if(r.summary && r.summary.length){
+      var inv = dt==="Customer"? "/sales-invoices" : "/purchase-invoices", strip = h("div",{class:"gd k4 sm",style:"grid-template-columns:repeat(2,1fr);margin-bottom:8px"});
+      r.summary.forEach(function(x){
+        strip.appendChild(h("div",{class:"card kpi"}, h("div",{class:"l",text:x.k==="billed"? (ar?"إجمالي الفواتير":"Total billed") : (ar?"المستحق (غير مسدد)":"Outstanding")}),
+          h("div",{class:"v"},AMY.num(x.v,x.v>=1000?0:2),h("small",{text:cur})), h("div",{class:"c",text:x.n+" "+(ar?"فاتورة":"invoices")})));
+      });
+      host.appendChild(strip);
+    }
+    (r.groups||[]).forEach(function(g){
+      var c = AMY.cfg.docs[g.dt]; if(!c) return;
+      var title = REL[g.key]? AMY.lb(REL[g.key]) : AMY.lb(c.plural);
+      if(g.key==="orders"||g.key==="invoices") title = AMY.lb(c.plural);
+      var tb = h("tbody");
+      g.rows.forEach(function(x){
+        tb.appendChild(h("tr",{class:"go",onclick:function(){ AMY.go("/"+c.slug+"/"+encodeURIComponent(x.name)) }},
+          h("td",{class:"nm num",text:x.name}), h("td",{class:"mut",text:x.title||""}), h("td",{class:"mut",text:x.date? AMY.date(x.date) : ""}),
+          h("td",{class:"num end",text:x.amount? AMY.num(x.amount,2)+" "+cur : ""}),
+          h("td",null, x.status? AMY.statusPill(x.status) : AMY.docPill(x.docstatus))));
+      });
+      host.appendChild(h("div",{class:"card flush sec rel"}, h("div",{class:"hd"},h("h2",null,h("span",{text:title}))), h("div",{class:"scroll"},h("table",{class:"tbl"},tb))));
+    });
+  }).catch(function(){});
+};
 })();

@@ -83,38 +83,56 @@ def _series(company, today, days=14):
 def _top_items(company, month_start):
     if not frappe.has_permission("Sales Invoice", "read"):
         raise frappe.PermissionError
+    # Row level rules (user permissions) apply to the invoice list; the lines are summed from those only.
+    names = frappe.get_list(
+        "Sales Invoice",
+        filters={"docstatus": 1, "company": company, "posting_date": [">=", month_start]},
+        pluck="name", limit_page_length=5000,
+    )
+    if not names:
+        return []
     return frappe.db.sql(
         """
         select sii.item_code, max(sii.item_name) as item_name,
                sum(sii.qty) as qty, sum(sii.base_net_amount) as amount
         from `tabSales Invoice Item` sii
-        join `tabSales Invoice` si on si.name = sii.parent
-        where si.docstatus = 1 and si.company = %s and si.posting_date >= %s
+        where sii.parent in %(names)s
         group by sii.item_code
         order by amount desc
         limit 5
         """,
-        (company, month_start),
+        {"names": tuple(names)},
         as_dict=True,
     )
 
 
-def _low_stock():
-    if not frappe.has_permission("Bin", "read"):
+def _low_stock(company):
+    if not (frappe.has_permission("Bin", "read") and frappe.has_permission("Item", "read")):
         raise frappe.PermissionError
-    rows = frappe.db.sql(
-        """
-        select b.item_code, i.item_name, b.warehouse, b.actual_qty, ir.warehouse_reorder_level as level
-        from `tabBin` b
-        join `tabItem` i on i.name = b.item_code and i.disabled = 0 and i.is_stock_item = 1
-        left join `tabItem Reorder` ir on ir.parent = b.item_code and ir.warehouse = b.warehouse
-        where b.actual_qty <= coalesce(ir.warehouse_reorder_level, 0)
-        order by b.actual_qty asc
-        limit 6
-        """,
-        as_dict=True,
+    warehouses = frappe.get_list("Warehouse", filters={"company": company, "is_group": 0}, pluck="name",
+                                 limit_page_length=1000)
+    if not warehouses:
+        return []
+    bins = frappe.get_list(
+        "Bin", filters={"warehouse": ["in", warehouses]},
+        fields=["item_code", "warehouse", "actual_qty"], order_by="actual_qty asc", limit_page_length=300,
     )
-    return rows
+    if not bins:
+        return []
+    codes = list({b.item_code for b in bins})
+    items = {i.name: i.item_name for i in frappe.get_list(
+        "Item", filters={"name": ["in", codes], "disabled": 0, "is_stock_item": 1},
+        fields=["name", "item_name"], limit_page_length=len(codes))}
+    levels = {}
+    for r in frappe.get_all("Item Reorder", filters={"parent": ["in", codes]},
+                            fields=["parent", "warehouse", "warehouse_reorder_level"], limit_page_length=2000):
+        levels[(r.parent, r.warehouse)] = flt(r.warehouse_reorder_level)
+    out = []
+    for b in bins:
+        if b.item_code in items and flt(b.actual_qty) <= levels.get((b.item_code, b.warehouse), 0):
+            out.append({"item_code": b.item_code, "item_name": items[b.item_code], "warehouse": b.warehouse,
+                        "actual_qty": b.actual_qty})
+    return out[:6]
 
 
 def _recent_invoices(company):
@@ -157,10 +175,12 @@ def _zatca_summary(company, month_start):
     dt = "Sales Invoice Additional Fields"
     if not frappe.db.exists("DocType", dt):
         return None
+    if not frappe.has_permission(dt, "read"):
+        raise frappe.PermissionError
     meta = frappe.get_meta(dt)
     if not meta.has_field("integration_status"):
         return None
-    rows = frappe.get_all(
+    rows = frappe.get_list(
         dt,
         filters={"creation": [">=", month_start], "is_latest": 1},
         fields=["integration_status as status", "count(name) as n"],
@@ -190,7 +210,7 @@ def dashboard():
         "stock_value": _safe(_stock_value),
         "series": _safe(_series, company, today),
         "top_items": _safe(_top_items, company, month_start),
-        "low_stock": _safe(_low_stock),
+        "low_stock": _safe(_low_stock, company),
         "recent": _safe(_recent_invoices, company),
         "zatca": _safe(_zatca_summary, company, month_start),
         "apps": {"pos_next": "pos_next" in apps, "zatca": "ksa_compliance" in apps},

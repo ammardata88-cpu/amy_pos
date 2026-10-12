@@ -196,7 +196,7 @@ V.form = function(dt, name, p, root){
     function tableControl(tb){
       var rows = doc[tb.f] = doc[tb.f] || [];
       var box = h("div"), tbody = h("tbody"), editable = !ro && !tb.ro, tools = editable && !tb.fixed;
-      var tbl = h("table",{class:"itbl"}, h("thead",null, h("tr",null, tb.cols.map(function(c){ return h("th",{style:c.w?"width:"+c.w:"",text:lb(c.l)}) }), tools? h("th",{style:"width:44px"}) : null)), tbody);
+      var tbl = h("table",{class:"itbl"}, h("thead",null, h("tr",null, tb.cols.map(function(c){ return h("th",{style:c.w?"width:"+c.w:"",text:lb(c.l)}) }), (tools||tb.open)? h("th",{style:"width:44px"}) : null)), tbody);
       function addRow(){ var r = tb.newRow? tb.newRow(doc) : {}; rows.push(r); draw(); var first = tbody.lastChild && tbody.lastChild.querySelector("input"); if(first) first.focus() }
       function draw(){
         AMY.clear(tbody);
@@ -222,6 +222,7 @@ V.form = function(dt, name, p, root){
             tr.appendChild(td);
           });
           if(tools) tr.appendChild(h("td",null, h("button",{class:"x",type:"button","aria-label":t("remove"),onclick:function(){ rows.splice(ri,1); draw(); schedulePreview() }}, AMY.icon("x"))));
+          else if(tb.open){ var op = tb.open(r); tr.appendChild(h("td",null, op? h("a",{class:"x",href:"#"+op,title:t("openRec")},AMY.icon("chevL")) : null)) }
           tbody.appendChild(tr);
         });
         if(!rows.length) tbody.appendChild(h("tr",null,h("td",{colspan:tb.cols.length+1,class:"mut",style:"text-align:center;padding:22px"},t("noData"))));
@@ -291,6 +292,7 @@ V.form = function(dt, name, p, root){
       root.appendChild(card);
     });
     if(cfg.panels) cfg.panels.forEach(function(pn){ if(!isNew) pn(doc, root, form) });
+    if(!isNew && AMY.relatedPanel) AMY.relatedPanel(dt, doc, root);
     updateDeps(); drawTotals(null);
 
     /* ----- action bar ----- */

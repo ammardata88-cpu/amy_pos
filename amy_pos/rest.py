@@ -70,6 +70,41 @@ def _check(doctype):
         frappe.throw(_("Not permitted"), frappe.PermissionError)
 
 
+STD_FIELDS = {"name", "owner", "creation", "modified", "modified_by", "docstatus", "idx", "lft", "rgt"}
+# Never accepted from the browser: they belong to the framework.
+PROTECTED = {"owner", "creation", "modified", "modified_by", "parent", "parenttype", "parentfield",
+             "_user_tags", "_comments", "_assign", "_liked_by", "__islocal", "__unsaved", "__run_link_triggers"}
+
+
+def _field_ok(meta, f, levels):
+    """A plain column the caller may read (exists, and its permission level is open to the user)."""
+    if f in STD_FIELDS:
+        return True
+    df = meta.get_field(f)
+    return bool(df) and df.fieldtype not in frappe.model.table_fields and cint(df.permlevel) in levels
+
+
+def _read_levels(meta):
+    try:
+        return set(meta.get_permlevel_access("read")) or {0}
+    except Exception:
+        return {0}
+
+
+def _clean(d):
+    """Drop framework-owned keys from a document dict, rows included."""
+    if isinstance(d, dict):
+        return {k: _clean(v) for k, v in d.items() if k not in PROTECTED}
+    if isinstance(d, list):
+        return [_clean(x) for x in d]
+    return d
+
+
+def _need(doctype, ptype="create"):
+    if not frappe.has_permission(doctype, ptype):
+        frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+
 def _company(doc=None):
     c = doc and doc.get("company")
     return c or frappe.defaults.get_user_default("Company") or frappe.db.get_single_value(
@@ -124,20 +159,28 @@ def bootstrap():
 def list_docs(doctype, fields=None, filters=None, search=None, search_fields=None,
               order_by="modified desc", start=0, limit=20):
     _check(doctype)
+    meta = frappe.get_meta(doctype)
+    levels = _read_levels(meta)
     fields = _json(fields, ["name"])
     for f in fields:
-        if not SAFE_FIELD.match(f):
+        if not SAFE_FIELD.match(f) or not _field_ok(meta, f, levels):
             frappe.throw(_("Invalid field"))
-    if not SAFE_ORDER.match(order_by or "modified desc"):
+    order_by = order_by or "modified desc"
+    if not SAFE_ORDER.match(order_by) or not _field_ok(meta, order_by.split(" ")[0], levels):
         frappe.throw(_("Invalid order"))
     filters = _json(filters, {}) or {}
+    if not isinstance(filters, dict):
+        frappe.throw(_("Invalid filters"))
+    for f in filters:
+        if not SAFE_FIELD.match(f) or not _field_ok(meta, f, levels):
+            frappe.throw(_("Invalid filters"))
     or_filters = None
     sf = _json(search_fields, [])
     if search and sf:
         for f in sf:
-            if not SAFE_FIELD.match(f):
+            if not SAFE_FIELD.match(f) or not _field_ok(meta, f, levels):
                 frappe.throw(_("Invalid field"))
-        or_filters = [[f, "like", "%" + search.strip() + "%"] for f in sf]
+        or_filters = [[f, "like", "%" + search.strip()[:100] + "%"] for f in sf]
     kw = dict(filters=filters, or_filters=or_filters)
     rows = frappe.get_list(
         doctype, fields=fields, order_by=order_by,
@@ -152,6 +195,7 @@ def get_doc(doctype, name):
     _check(doctype)
     doc = frappe.get_doc(doctype, name)
     doc.check_permission("read")
+    doc.apply_fieldlevel_read_permissions()
     d = doc.as_dict()
     if doctype in PARTY:
         _party_extras(doc, d)
@@ -163,6 +207,7 @@ def get_doc(doctype, name):
 def new_defaults(doctype):
     """Starting values for a blank document."""
     _check(doctype)
+    _need(doctype, "create")
     meta = frappe.get_meta(doctype)
     company = _company()
     d = {"doctype": doctype}
@@ -249,6 +294,10 @@ def new_defaults(doctype):
 
 @frappe.whitelist()
 def item_details(item_code, doctype, party=None, qty=1, warehouse=None, price_list=None, currency=None):
+    if doctype not in TXN:
+        frappe.throw(_("Not permitted"), frappe.PermissionError)
+    _need("Item", "read")
+    frappe.get_doc("Item", item_code).check_permission("read")
     """Price, UOM, accounts and stock for one item row."""
     return _item_details(item_code, doctype, party, qty, warehouse, price_list, currency)
 
@@ -290,6 +339,16 @@ def _item_details(item_code, doctype, party=None, qty=1, warehouse=None, price_l
 @frappe.whitelist()
 def tax_rows(doctype, template):
     """Tax rows of a tax template, ready to drop into an invoice."""
+    if doctype not in TXN:
+        frappe.throw(_("Not permitted"), frappe.PermissionError)
+    master = "Sales Taxes and Charges Template" if doctype in SALES_DOCS \
+        else "Purchase Taxes and Charges Template"
+    if template:
+        frappe.get_doc(master, template).check_permission("read")
+    return _tax_rows(doctype, template)
+
+
+def _tax_rows(doctype, template):
     master = "Sales Taxes and Charges Template" if doctype in SALES_DOCS \
         else "Purchase Taxes and Charges Template"
     if not template:
@@ -350,7 +409,7 @@ def _prepare(doc, extras=None):
                 row.schedule_date = doc.schedule_date
         tmpl = doc.get("taxes_and_charges")
         if tmpl and not doc.get("taxes"):
-            for r in tax_rows(dt, tmpl):
+            for r in _tax_rows(dt, tmpl):
                 doc.append("taxes", r)
 
     elif dt == "POS Profile":
@@ -411,9 +470,11 @@ def preview(doctype, data):
     """Totals and taxes of an unsaved invoice, calculated by ERPNext."""
     if doctype not in TXN:
         frappe.throw(_("Not permitted"), frappe.PermissionError)
-    d = _json(data, {})
+    _need(doctype, "create")
+    d = _clean(_json(data, {}))
     d["doctype"] = doctype
-    d["items"] = [r for r in d.get("items", []) if r.get("item_code")]
+    d["items"] = [r for r in d.get("items", []) if r.get("item_code")][:300]
+    d["docstatus"] = 0
     doc = frappe.get_doc(d)
     doc.company = _company(doc)
     doc.currency = doc.get("currency") or frappe.get_cached_value("Company", doc.company, "default_currency")
@@ -425,7 +486,7 @@ def preview(doctype, data):
             r.conversion_factor = 1
     tmpl = doc.get("taxes_and_charges")
     if tmpl and not doc.get("taxes"):
-        for r in tax_rows(doctype, tmpl):
+        for r in _tax_rows(doctype, tmpl):
             doc.append("taxes", r)
     try:
         doc.calculate_taxes_and_totals()
@@ -448,14 +509,18 @@ def preview(doctype, data):
 def save_doc(doctype, data, submit=0):
     _check(doctype)
     d = _json(data, {})
+    if not isinstance(d, dict):
+        frappe.throw(_("Invalid data"))
+    extras = {k: d.pop(k) for k in list(d) if k.startswith("_") and k not in PROTECTED}
+    d = _clean(d)
     d["doctype"] = doctype
-    extras = {k: d.pop(k) for k in list(d) if k.startswith("_")}
     name = d.get("name")
     if name and frappe.db.exists(doctype, name):
         doc = frappe.get_doc(doctype, name)
         if doc.docstatus != 0:
             frappe.throw(_("Submitted documents cannot be edited. Cancel it first."))
         d.pop("docstatus", None)
+        d.pop("doctype", None)
         doc.update(d)
     else:
         newname = d.pop("name", None)
@@ -532,7 +597,7 @@ def _selling_list():
 
 def _upsert_item_price(item, rate):
     pl = _selling_list()
-    if not pl or rate is None:
+    if not pl or rate is None or not frappe.has_permission("Item Price", "write"):
         return
     ip = frappe.db.get_value("Item Price", {"item_code": item, "price_list": pl, "selling": 1}, "name")
     if ip:
@@ -573,6 +638,7 @@ def make_return(doctype, name):
     from erpnext.controllers.sales_and_purchase_return import make_return_doc
     src = frappe.get_doc(doctype, name)
     src.check_permission("read")
+    _need(doctype, "create")
     return make_return_doc(doctype, name).as_dict()
 
 
@@ -584,6 +650,7 @@ def make_payment(doctype, name):
     from erpnext.accounts.doctype.payment_entry.payment_entry import get_payment_entry
     src = frappe.get_doc(doctype, name)
     src.check_permission("read")
+    _need("Payment Entry", "create")
     return get_payment_entry(doctype, name).as_dict()
 
 
@@ -628,13 +695,19 @@ def save_user(data):
     email = (d.get("email") or "").strip().lower()
     if not email:
         frappe.throw(_("Email is required"))
+    if email not in ("administrator",) and not frappe.utils.validate_email_address(email):
+        frappe.throw(_("Enter a valid email address"))
     key = d.get("amy_role") or "sales"
+    if key not in ROLE_SETS:
+        frappe.throw(_("Invalid role"))
+    if email == frappe.session.user and key != "admin":
+        frappe.throw(_("You cannot remove your own admin access"))
     roles = _role_set(key) if key in ROLE_SETS else None
     managed = {r for k in ROLE_SETS for r in _role_set(k)}
 
     if frappe.db.exists("User", email):
         doc = frappe.get_doc("User", email)
-        if email in ("Administrator", "Guest"):
+        if email in ("Administrator", "Guest") or doc.user_type != "System User":
             frappe.throw(_("Not permitted"), frappe.PermissionError)
         if email == frappe.session.user and not cint(d.get("enabled", 1)):
             frappe.throw(_("You cannot disable your own account"))
@@ -679,6 +752,7 @@ def make_from(doctype, name, target):
     if not path:
         frappe.throw(_("Not permitted"), frappe.PermissionError)
     frappe.get_doc(doctype, name).check_permission("read")
+    _need(target, "create")
     d = frappe.get_attr(path)(name)
     if target in INVOICES:
         d.update_stock = 1
@@ -702,3 +776,118 @@ def quick_setup():
         frappe.throw(_("Not permitted"), frappe.PermissionError)
     from amy_pos.setup import defaults
     return defaults.apply()
+
+
+# ---------------------------------------------------------------- how documents connect
+def _brief(dt, names, date_f, amount_f, title_f=None, limit=8):
+    """Short rows for other documents, filtered by what the user may read."""
+    if not names or not frappe.has_permission(dt, "read"):
+        return []
+    fields = ["name", date_f, amount_f, "docstatus"]
+    if title_f:
+        fields.append(title_f)
+    meta = frappe.get_meta(dt)
+    if meta.has_field("status"):
+        fields.append("status")
+    rows = frappe.get_list(dt, filters={"name": ["in", list(names)], "docstatus": ["<", 2]}, fields=fields,
+                           order_by="creation desc", limit_page_length=limit)
+    return [{"name": r.name, "date": r.get(date_f), "amount": flt(r.get(amount_f)), "docstatus": r.docstatus,
+             "status": r.get("status"), "title": r.get(title_f) if title_f else None} for r in rows]
+
+
+def _parents(child_dt, parent_dt, field, value):
+    return list({r.parent for r in frappe.get_all(child_dt, filters={field: value, "parenttype": parent_dt},
+                                                  fields=["parent"], limit_page_length=200)})
+
+
+@frappe.whitelist()
+def related(doctype, name):
+    """What a document is tied to: payments, returns, source and follow-up documents, party totals."""
+    _check(doctype)
+    doc = frappe.get_doc(doctype, name)
+    doc.check_permission("read")
+    groups, summary = [], []
+
+    def add(key, dt, rows):
+        if rows:
+            groups.append({"key": key, "dt": dt, "rows": rows})
+
+    if doctype in INVOICES:
+        sales = doctype == "Sales Invoice"
+        refs = frappe.get_all("Payment Entry Reference", filters={"reference_doctype": doctype, "reference_name": name},
+                              fields=["parent"], limit_page_length=100)
+        add("payments", "Payment Entry", _brief("Payment Entry", {r.parent for r in refs}, "posting_date", "paid_amount"))
+        ret = frappe.get_all(doctype, filters={"return_against": name, "docstatus": ["<", 2]}, pluck="name", limit_page_length=50)
+        add("returns", doctype, _brief(doctype, ret, "posting_date", "grand_total"))
+        if doc.get("return_against"):
+            add("original", doctype, _brief(doctype, [doc.return_against], "posting_date", "grand_total"))
+        f = "sales_order" if sales else "purchase_order"
+        srcs = {r.get(f) for r in doc.get("items") if r.get(f)}
+        add("source", "Sales Order" if sales else "Purchase Order",
+            _brief("Sales Order" if sales else "Purchase Order", srcs, "transaction_date", "grand_total"))
+        if sales and "ksa_compliance" in frappe.get_installed_apps() and frappe.db.exists("DocType", "Sales Invoice Additional Fields") \
+                and frappe.has_permission("Sales Invoice Additional Fields", "read"):
+            z = frappe.get_list("Sales Invoice Additional Fields", filters={"sales_invoice": name, "is_latest": 1},
+                                fields=["name", "integration_status", "creation"], limit_page_length=1)
+            if z:
+                add("zatca", "Sales Invoice Additional Fields",
+                    [{"name": z[0].name, "date": z[0].creation, "amount": None, "status": z[0].integration_status}])
+
+    elif doctype in ("Sales Order", "Purchase Order", "Quotation"):
+        if doctype == "Quotation":
+            orders = _parents("Sales Order Item", "Sales Order", "prevdoc_docname", name)
+            add("orders", "Sales Order", _brief("Sales Order", orders, "transaction_date", "grand_total"))
+        else:
+            sales = doctype == "Sales Order"
+            invs = _parents(("Sales Invoice Item" if sales else "Purchase Invoice Item"),
+                            ("Sales Invoice" if sales else "Purchase Invoice"),
+                            ("sales_order" if sales else "purchase_order"), name)
+            add("invoices", "Sales Invoice" if sales else "Purchase Invoice",
+                _brief("Sales Invoice" if sales else "Purchase Invoice", invs, "posting_date", "grand_total"))
+        if doctype == "Sales Order":
+            qts = {r.prevdoc_docname for r in doc.get("items") if r.get("prevdoc_docname")}
+            add("source", "Quotation", _brief("Quotation", qts, "transaction_date", "grand_total"))
+
+    elif doctype in PARTY:
+        sales = doctype == "Customer"
+        inv_dt, pf = ("Sales Invoice", "customer") if sales else ("Purchase Invoice", "supplier")
+        if frappe.has_permission(inv_dt, "read"):
+            base = {pf: name, "docstatus": 1}
+            tot = frappe.get_list(inv_dt, filters=base, fields=["sum(base_grand_total) as total", "count(name) as n"])
+            due = frappe.get_list(inv_dt, filters={**base, "outstanding_amount": [">", 0]},
+                                  fields=["sum(outstanding_amount) as due", "count(name) as n"])
+            summary = [{"k": "billed", "v": flt(tot[0].total) if tot else 0, "n": cint(tot[0].n) if tot else 0},
+                       {"k": "due", "v": flt(due[0].due) if due else 0, "n": cint(due[0].n) if due else 0}]
+        pays = frappe.get_all("Payment Entry", filters={"party_type": doctype, "party": name, "docstatus": 1},
+                              pluck="name", order_by="creation desc", limit_page_length=8)
+        add("payments", "Payment Entry", _brief("Payment Entry", pays, "posting_date", "paid_amount"))
+        if sales:
+            qts = frappe.get_all("Quotation", filters={"party_name": name, "quotation_to": "Customer", "docstatus": ["<", 2]},
+                                 pluck="name", order_by="creation desc", limit_page_length=5) if frappe.has_permission("Quotation", "read") else []
+            add("quotes", "Quotation", _brief("Quotation", qts, "transaction_date", "grand_total"))
+            so = frappe.get_all("Sales Order", filters={"customer": name, "docstatus": ["<", 2]}, pluck="name",
+                                order_by="creation desc", limit_page_length=5) if frappe.has_permission("Sales Order", "read") else []
+            add("orders", "Sales Order", _brief("Sales Order", so, "transaction_date", "grand_total"))
+        else:
+            po = frappe.get_all("Purchase Order", filters={"supplier": name, "docstatus": ["<", 2]}, pluck="name",
+                                order_by="creation desc", limit_page_length=5) if frappe.has_permission("Purchase Order", "read") else []
+            add("orders", "Purchase Order", _brief("Purchase Order", po, "transaction_date", "grand_total"))
+
+    elif doctype == "Item":
+        for key, inv, child, pf in (("sold", "Sales Invoice", "Sales Invoice Item", "customer_name"),
+                                    ("bought", "Purchase Invoice", "Purchase Invoice Item", "supplier_name")):
+            if not frappe.has_permission(inv, "read"):
+                continue
+            ps = [r.parent for r in frappe.get_all(child, filters={"item_code": name, "parenttype": inv}, fields=["parent"],
+                                                   order_by="creation desc", limit_page_length=30)]
+            add(key, inv, _brief(inv, ps, "posting_date", "grand_total", pf))
+
+    elif doctype == "Payment Entry":
+        pass
+
+    elif doctype == "POS Profile":
+        if frappe.has_permission("POS Opening Shift", "read"):
+            sh = frappe.get_all("POS Opening Shift", filters={"pos_profile": name}, pluck="name", order_by="creation desc", limit_page_length=8)
+            add("shifts", "POS Opening Shift", _brief("POS Opening Shift", sh, "period_start_date", "docstatus"))
+
+    return {"summary": summary, "groups": groups}
