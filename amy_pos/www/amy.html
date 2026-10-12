@@ -12,17 +12,42 @@
 html,body{margin:0}
 body{font-family:"Segoe UI",Tahoma,"Noto Sans Arabic",system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--navy);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
 a{color:inherit;text-decoration:none}
-.top{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
-.top .in{max-width:1180px;margin:0 auto;padding:10px 18px;display:flex;align-items:center;gap:12px}
-.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px;letter-spacing:-.3px}
-.logo img{width:36px;height:36px;border-radius:10px}
-.logo small{display:block;font-weight:600;font-size:12px;color:var(--muted);margin-top:-4px}
+.shell{display:flex;min-height:100vh}
+.side{width:262px;flex:none;background:var(--navy);color:#CBD5E1;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;z-index:30}
+.side .logo{padding:18px 18px 14px;color:#fff;font-weight:800;font-size:21px;display:flex;align-items:center;gap:10px}
+.side .logo img{width:38px;height:38px;border-radius:11px}
+.side .logo small{display:block;font-weight:600;font-size:12px;color:#94A3B8;margin-top:-4px}
+.nav{padding:6px 10px 20px;flex:1}
+.ni,.gh{display:flex;align-items:center;gap:11px;width:100%;border:0;background:none;color:inherit;font:inherit;font-weight:600;font-size:14.5px;padding:10px 12px;border-radius:12px;cursor:pointer;text-align:start}
+.ni:hover,.gh:hover{background:rgba(255,255,255,.07);color:#fff}
+.ni.on{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff}
+.gh .ic,.ni .ic{width:22px;text-align:center;font-size:17px}
+.gh .ar{margin-inline-start:auto;font-size:11px;transition:.15s}
+.grp.open .gh .ar{transform:rotate(180deg)}
+.sub{display:none;padding:2px 0 6px;margin-inline-start:20px;border-inline-start:1px solid rgba(255,255,255,.12)}
+.grp.open .sub{display:block}
+.sub .ni{font-size:13.5px;font-weight:500;padding:8px 12px;margin-inline-start:6px;width:calc(100% - 6px)}
+.sf{padding:12px 16px;border-top:1px solid rgba(255,255,255,.1);font-size:12px;color:#94A3B8}
+.right{flex:1;min-width:0;display:flex;flex-direction:column}
+.top{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.top .in{padding:10px 20px;display:flex;align-items:center;gap:12px}
+.top h3{margin:0;font-size:18px}
+#menu{display:none}
+.frame{flex:1;border:0;width:100%;min-height:calc(100vh - 62px);background:#fff}
+.scrim{display:none}
+@media(max-width:900px){
+ .side{position:fixed;top:0;bottom:0;inset-inline-start:-290px;transition:.2s;height:100%}
+ body.nav-open .side{inset-inline-start:0}
+ body.nav-open .scrim{display:block;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:25}
+ #menu{display:inline-flex}
+}
 .sp{flex:1}
+@media(max-width:900px){#deskTop{display:none}}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:12px;padding:10px 18px;font:inherit;font-weight:700;cursor:pointer;white-space:nowrap}
 .btn.p{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff}
 .btn.g{background:#fff;color:var(--navy);box-shadow:inset 0 0 0 1.5px var(--line)}
 .btn.s{padding:7px 12px;font-size:13px}
-main{max-width:1180px;margin:0 auto;padding:22px 18px 60px}
+main{max-width:1180px;margin:0 auto;padding:22px 18px 60px;width:100%}
 .hello{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:18px}
 .hello h1{margin:0;font-size:26px;letter-spacing:-.4px}
 .hello p{margin:2px 0 0;color:var(--muted)}
@@ -67,13 +92,20 @@ h2{margin:0 0 12px;font-size:16.5px}
 </style>
 </head>
 <body>
+<div class="shell">
+<aside class="side"><a class="logo" href="#home"><img src="/assets/amy_pos/images/logo.svg" alt=""><span>AMY<small id="company"></small></span></a>
+ <nav class="nav" id="nav"></nav><div class="sf">AMY by AMY Tech</div></aside>
+<div class="scrim" id="scrim"></div>
+<div class="right">
 <header class="top"><div class="in">
-  <a class="logo" href="/amy"><img src="/assets/amy_pos/images/logo.svg" alt=""><span>AMY<small id="company"></small></span></a>
+  <button class="btn g s" id="menu" type="button">&#9776;</button>
+  <h3 id="ptitle"></h3>
   <span class="sp"></span>
-  <a class="btn g s hide" id="posTop" href="/pos"></a>
+  <a class="btn p s hide" id="posTop" href="/pos"></a>
   <a class="btn g s" id="deskTop" href="/app"></a>
   <button class="btn g s" id="lang" type="button">EN</button>
 </div></header>
+<iframe class="frame hide" id="frame" title="AMY"></iframe>
 <main>
   <div id="err" class="err hide"></div>
   <div class="hello"><div><h1 id="hi"></h1><p id="date"></p></div><a class="btn p hide" id="posBtn" href="/pos"></a></div>
@@ -90,17 +122,18 @@ h2{margin:0 0 12px;font-size:16.5px}
   <section class="card" style="margin-top:14px"><h2 id="tRecent"></h2><ul class="list" id="recent"></ul></section>
   <p class="foot">AMY by AMY Tech · amytech.net</p>
 </main>
+</div></div>
 <script>
 (function(){
 var USER = "{{ user_fullname | e }}";
 var TXT = {
- ar:{dir:"rtl",hi:"أهلاً، ",desk:"النظام الكامل",pos:"فتح الكاشير",today:"مبيعات اليوم",month:"مبيعات الشهر",purch:"مشتريات الشهر",recv:"مستحق من العملاء",pay:"مستحق للموردين",stock:"قيمة المخزون",inv:"فاتورة",
+ ar:{dir:"rtl",home:"الرئيسية",hi:"أهلاً، ",desk:"النظام الكامل",pos:"فتح الكاشير",today:"مبيعات اليوم",month:"مبيعات الشهر",purch:"مشتريات الشهر",recv:"مستحق من العملاء",pay:"مستحق للموردين",stock:"قيمة المخزون",inv:"فاتورة",
   chart:"المبيعات آخر 14 يوم",acts:"إجراءات سريعة",top:"الأكثر مبيعًا هذا الشهر",low:"مخزون يحتاج انتباه",z:"الفوترة الإلكترونية (ZATCA) هذا الشهر",recent:"آخر الفواتير",
   none:"لا توجد بيانات بعد",noperm:"غير متاح لصلاحياتك",qty:"الكمية",out:"نفد",neg:"رصيد سالب",
   a:{pos:"الكاشير",si:"فاتورة بيع",pi:"فاتورة مشتريات",se:"حركة مخزون",item:"صنف جديد",cust:"عميل جديد",supp:"مورد جديد",rs:"تقرير المخزون",rv:"تقرير المبيعات"},
   zs:{"Accepted":"مقبولة","Accepted with warnings":"مقبولة بتحذيرات","Rejected":"مرفوضة","Ready For Batch":"بانتظار الإرسال","Resend":"إعادة إرسال","Corrected":"مصححة","Clearance switched off":"التصريح متوقف","Duplicate":"مكررة","Pending":"قيد الانتظار"},
   err:"تعذّر تحميل البيانات. حدّث الصفحة أو سجّل الدخول من جديد.",locale:"ar"},
- en:{dir:"ltr",hi:"Hello, ",desk:"Full system",pos:"Open POS",today:"Sales today",month:"Sales this month",purch:"Purchases this month",recv:"Owed by customers",pay:"Owed to suppliers",stock:"Stock value",inv:"invoices",
+ en:{dir:"ltr",home:"Home",hi:"Hello, ",desk:"Full system",pos:"Open POS",today:"Sales today",month:"Sales this month",purch:"Purchases this month",recv:"Owed by customers",pay:"Owed to suppliers",stock:"Stock value",inv:"invoices",
   chart:"Sales, last 14 days",acts:"Quick actions",top:"Top sellers this month",low:"Stock needing attention",z:"E-invoicing (ZATCA) this month",recent:"Recent invoices",
   none:"No data yet",noperm:"Not available for your role",qty:"Qty",out:"Out of stock",neg:"Negative stock",
   a:{pos:"POS",si:"Sales invoice",pi:"Purchase invoice",se:"Stock entry",item:"New item",cust:"New customer",supp:"New supplier",rs:"Stock report",rv:"Sales report"},
@@ -141,9 +174,11 @@ function render(){
   $("hi").textContent = t.hi + (USER||"");
   try{ $("date").textContent = new Date().toLocaleDateString(t.locale,{weekday:"long",year:"numeric",month:"long",day:"numeric"}) }catch(e){}
   $("tChart").textContent=t.chart; $("tActs").textContent=t.acts; $("tTop").textContent=t.top; $("tLow").textContent=t.low; $("tZ").textContent=t.z; $("tRecent").textContent=t.recent;
+  renderNav(); $("ptitle").textContent=titleOf(CUR);
   if(!d){return}
   $("company").textContent = d.company||"";
   var pos = d.apps && d.apps.pos_next;
+  renderNav();
   ["posTop","posBtn"].forEach(function(i){var a=$(i); a.textContent=t.pos; a.classList.toggle("hide",!pos)});
 
   var k = $("kpis"); clear(k);
@@ -208,8 +243,110 @@ function fill(ul, rows, row){
   rows.forEach(function(r){ul.appendChild(row(r))});
 }
 
-$("lang").addEventListener("click",function(){L = L==="ar"?"en":"ar"; try{localStorage.setItem("amy_lang",L)}catch(e){} render()});
+
+/* ---------- sidebar ---------- */
+var NAV = [
+ {id:"home", i:"🏠", ar:"الرئيسية", en:"Home", go:"home"},
+ {id:"sales", i:"🧾", ar:"المبيعات والعملاء", en:"Sales & Customers", k:[
+  ["pos","/pos","نقاط البيع","POS",1],
+  ["/app/pos-opening-entry","/app/pos-opening-entry","فتح الصندوق","Open register"],
+  ["/app/pos-closing-entry","/app/pos-closing-entry","إغلاق الصندوق","Close register"],
+  ["/app/sales-invoice","/app/sales-invoice","فواتير المبيعات","Sales invoices"],
+  ["/app/pricing-rule","/app/pricing-rule","العروض الترويجية","Promotions"],
+  ["/app/customer","/app/customer","العملاء","Customers"],
+  ["/app/payment-entry?payment_type=Receive","/app/payment-entry?payment_type=Receive","مدفوعات العملاء","Customer payments"],
+  ["/app/selling-settings","/app/selling-settings","إعدادات البيع","Sales settings"]]},
+ {id:"stock", i:"📦", ar:"المنتجات والمخزون", en:"Products & Stock", k:[
+  ["/app/item","/app/item","المنتجات","Items"],
+  ["/app/item-group","/app/item-group","الفئات","Categories"],
+  ["/app/warehouse","/app/warehouse","المستودعات","Warehouses"],
+  ["/app/stock-entry","/app/stock-entry","السندات المخزنية","Stock entries"],
+  ["/app/stock-reconciliation","/app/stock-reconciliation","جرد المخزون","Stock count"],
+  ["/app/stock-entry?stock_entry_type=Material%20Transfer","/app/stock-entry?stock_entry_type=Material%20Transfer","تحويل مخزون","Stock transfer"]]},
+ {id:"buy", i:"🚚", ar:"المشتريات والموردين", en:"Purchases & Suppliers", k:[
+  ["/app/purchase-invoice","/app/purchase-invoice","فواتير المشتريات","Purchase invoices"],
+  ["/app/purchase-invoice?is_return=1","/app/purchase-invoice?is_return=1","فواتير مردود المشتريات","Purchase returns"],
+  ["/app/supplier","/app/supplier","الموردين","Suppliers"],
+  ["/app/payment-entry?payment_type=Pay","/app/payment-entry?payment_type=Pay","مدفوعات الموردين","Supplier payments"]]},
+ {id:"acc", i:"💰", ar:"المحاسبة", en:"Accounting", k:[
+  ["/app/journal-entry","/app/journal-entry","القيود اليومية","Journal entries"],
+  ["/app/payment-entry","/app/payment-entry","المدفوعات والمقبوضات","Payments"],
+  ["/app/asset","/app/asset","الأصول الثابتة","Fixed assets"],
+  ["/app/account/view/tree","/app/account/view/tree","شجرة الحسابات","Chart of accounts"],
+  ["/app/sales-invoice-additional-fields","/app/sales-invoice-additional-fields","الفوترة الإلكترونية (ZATCA)","E-invoicing (ZATCA)",0,"zatca"]]},
+ {id:"rep", i:"📊", ar:"التقارير", en:"Reports", k:[
+  ["/app/query-report/Sales Register","/app/query-report/Sales%20Register","سجل المبيعات","Sales register"],
+  ["/app/query-report/Purchase Register","/app/query-report/Purchase%20Register","سجل المشتريات","Purchase register"],
+  ["/app/query-report/Stock Balance","/app/query-report/Stock%20Balance","أرصدة المخزون","Stock balance"],
+  ["/app/query-report/Accounts Receivable","/app/query-report/Accounts%20Receivable","ذمم العملاء","Receivables"],
+  ["/app/query-report/Accounts Payable","/app/query-report/Accounts%20Payable","ذمم الموردين","Payables"],
+  ["/app/query-report/Profit and Loss Statement","/app/query-report/Profit%20and%20Loss%20Statement","الأرباح والخسائر","Profit & loss"],
+  ["/app/query-report/General Ledger","/app/query-report/General%20Ledger","دفتر الأستاذ","General ledger"]]},
+ {id:"set", i:"⚙️", ar:"الإعدادات", en:"Settings", k:[
+  ["/app/company","/app/company","بيانات الشركة","Company"],
+  ["/app/user","/app/user","المستخدمين والصلاحيات","Users & roles"],
+  ["/app/sales-taxes-and-charges-template","/app/sales-taxes-and-charges-template","الضرائب","Taxes"],
+  ["/app/mode-of-payment","/app/mode-of-payment","طرق الدفع","Payment methods"],
+  ["/app/pos-profile","/app/pos-profile","إعدادات الكاشير","POS profiles"],
+  ["/app/zatca-business-settings","/app/zatca-business-settings","إعدادات ZATCA","ZATCA settings",0,"zatca"],
+  ["/app/system-settings","/app/system-settings","إعدادات النظام","System settings"]]}
+];
+var CUR = "home";
+function path(h){return h.split("?")[0]}
+function renderNav(){
+  var nav=$("nav"); clear(nav);
+  var posOn = DATA && DATA.apps && DATA.apps.pos_next, zOn = DATA && DATA.apps && DATA.apps.zatca;
+  NAV.forEach(function(g){
+    var lab = L==="ar"? g.ar : g.en;
+    if(g.go){
+      var a=el("button","ni"+(CUR==="home"?" on":"")); a.type="button";
+      a.appendChild(el("span","ic",g.i)); a.appendChild(el("span","",lab));
+      a.addEventListener("click",function(){go("home")}); nav.appendChild(a); return;
+    }
+    var box=el("div","grp"), h=el("button","gh"); h.type="button";
+    h.appendChild(el("span","ic",g.i)); h.appendChild(el("span","",lab)); h.appendChild(el("span","ar","▼"));
+    var sub=el("div","sub"), has=false;
+    g.k.forEach(function(k){
+      if(k[5]==="zatca" && !zOn) return;
+      if(k[4] && !posOn) return;
+      var on = CUR===k[1];
+      var a=el("button","ni"+(on?" on":"")); a.type="button"; a.textContent = L==="ar"? k[2] : k[3];
+      a.addEventListener("click",function(){ if(k[4]){location.href=k[1]} else go(k[1]) });
+      sub.appendChild(a); if(on) has=true;
+    });
+    if(has) box.classList.add("open");
+    h.addEventListener("click",function(){box.classList.toggle("open")});
+    box.appendChild(h); box.appendChild(sub); nav.appendChild(box);
+  });
+}
+function titleOf(h){
+  if(h==="home") return TXT[L].home;
+  for(var i=0;i<NAV.length;i++){ var g=NAV[i]; if(!g.k) continue;
+    for(var j=0;j<g.k.length;j++){ if(g.k[j][1]===h) return L==="ar"? g.k[j][2] : g.k[j][3] } }
+  return "";
+}
+function go(h){
+  CUR = h; document.body.classList.remove("nav-open");
+  try{ history.replaceState(null,"", h==="home"? "#home" : "#"+h) }catch(e){}
+  var fr=$("frame"), mn=document.querySelector("main");
+  if(h==="home"){ fr.classList.add("hide"); mn.classList.remove("hide"); fr.removeAttribute("src") }
+  else { mn.classList.add("hide"); fr.classList.remove("hide"); if(fr.getAttribute("data-h")!==h){ fr.setAttribute("data-h",h); fr.src=h } }
+  $("ptitle").textContent = titleOf(h);
+  renderNav();
+}
+$("frame").addEventListener("load",function(){
+  try{
+    var d=$("frame").contentDocument, st=d.createElement("style");
+    st.textContent=".navbar,.page-head-content .sidebar-toggle-btn,.layout-side-section{}"+
+      "header.navbar{display:none!important}body{padding-top:0!important}.page-head{top:0!important}";
+    d.head.appendChild(st);
+  }catch(e){}
+});
+$("menu").addEventListener("click",function(){document.body.classList.toggle("nav-open")});
+$("scrim").addEventListener("click",function(){document.body.classList.remove("nav-open")});
+$("lang").addEventListener("click",function(){L = L==="ar"?"en":"ar"; try{localStorage.setItem("amy_lang",L)}catch(e){} render(); $("ptitle").textContent=titleOf(CUR)});
 render();
+(function(){var h=(location.hash||"").slice(1); if(h && h!=="home" && h.indexOf("/app/")===0) go(h); else go("home")})();
 fetch("/api/method/amy_pos.api.dashboard",{credentials:"same-origin",headers:{"Accept":"application/json"}})
  .then(function(r){ if(r.status===401||r.status===403){location.href="/login?redirect-to=/amy"; throw 0} return r.json() })
  .then(function(j){ if(!j||!j.message) throw new Error("bad"); DATA=j.message; render() })
