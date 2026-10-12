@@ -78,7 +78,7 @@ function chrome(){
   up.appendChild(h("hr"));
   up.appendChild(h("button",{type:"button",onclick:function(){ location.href="/app" }}, AMY.icon("grid"), t("desk")));
   up.appendChild(h("button",{type:"button",onclick:function(){
-    AMY.call("logout",{}).then(function(){ location.href="/login" },function(){ location.href="/login" }) }}, AMY.icon("out"), t("signout")));
+    AMY.call("logout",{}).then(function(){ location.href="/amy-login" },function(){ location.href="/amy-login" }) }}, AMY.icon("out"), t("signout")));
   $("uBtn").textContent = (b.user.full_name||"?").trim().charAt(0).toUpperCase();
   if(b.logo){ var lg = document.querySelector(".sh .logo img"); lg.src = b.logo; lg.style.objectFit="contain"; lg.style.background="#fff" }
 }

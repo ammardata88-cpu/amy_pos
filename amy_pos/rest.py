@@ -24,10 +24,13 @@ ALLOWED = {
     "Company", "Mode of Payment", "Account", "Cost Center", "Currency",
     "Sales Taxes and Charges Template", "Purchase Taxes and Charges Template",
     "Pricing Rule", "POS Profile", "POS Opening Shift", "POS Closing Shift",
-    "Sales Invoice Additional Fields",
+    "Sales Invoice Additional Fields", "Quotation", "Sales Order", "Purchase Order",
 }
 
 INVOICES = ("Sales Invoice", "Purchase Invoice")
+ORDERS = ("Quotation", "Sales Order", "Purchase Order")
+TXN = INVOICES + ORDERS
+SALES_DOCS = ("Sales Invoice", "Sales Order", "Quotation")
 PARTY = {
     "Customer": ("customer_name", "customer_primary_contact", "customer_primary_address"),
     "Supplier": ("supplier_name", "supplier_primary_contact", "supplier_primary_address"),
@@ -170,6 +173,8 @@ def new_defaults(doctype):
         d["currency"] = cur
     if meta.has_field("posting_date"):
         d["posting_date"] = nowdate()
+    if meta.has_field("transaction_date"):
+        d["transaction_date"] = nowdate()
     if meta.has_field("naming_series"):
         f = meta.get_field("naming_series")
         opts = [o for o in (f.options or "").split("\n") if o]
@@ -199,6 +204,34 @@ def new_defaults(doctype):
         d["purpose"] = "Stock Reconciliation"
     if doctype == "Journal Entry":
         d["voucher_type"] = "Journal Entry"
+    if doctype in ("Sales Order", "Quotation", "Purchase Order"):
+        sales = doctype in SALES_DOCS
+        d["selling_price_list" if sales else "buying_price_list"] = \
+            gs("Selling Settings" if sales else "Buying Settings", "selling_price_list" if sales else "buying_price_list") or \
+            frappe.db.get_value("Price List", {"selling" if sales else "buying": 1, "enabled": 1}, "name")
+        d["taxes_and_charges"] = frappe.db.get_value(
+            "Sales Taxes and Charges Template" if sales else "Purchase Taxes and Charges Template",
+            {"is_default": 1, "company": company}, "name")
+        if doctype == "Quotation":
+            d["quotation_to"] = "Customer"
+            d["valid_till"] = frappe.utils.add_days(nowdate(), 15)
+        elif sales:
+            d["delivery_date"] = frappe.utils.add_days(nowdate(), 7)
+        else:
+            d["schedule_date"] = frappe.utils.add_days(nowdate(), 7)
+    if doctype == "POS Profile":
+        c = frappe.get_cached_doc("Company", company) if company else None
+        if c:
+            d["write_off_account"] = c.get("write_off_account")
+            d["write_off_cost_center"] = c.get("cost_center")
+            d["cost_center"] = c.get("cost_center")
+            d["income_account"] = c.get("default_income_account")
+            d["expense_account"] = c.get("default_expense_account")
+        d["selling_price_list"] = frappe.db.get_single_value("Selling Settings", "selling_price_list")
+        d["write_off_limit"] = 1
+        d["payments"] = [{"mode_of_payment": m, "default": 1 if i == 0 else 0}
+                         for i, m in enumerate(frappe.get_all("Mode of Payment", filters={"enabled": 1},
+                                                              pluck="name", limit=1))]
     if doctype == "Sales Invoice":
         d["selling_price_list"] = frappe.db.get_single_value("Selling Settings", "selling_price_list") or \
             frappe.db.get_value("Price List", {"selling": 1, "enabled": 1}, "name")
@@ -257,7 +290,7 @@ def _item_details(item_code, doctype, party=None, qty=1, warehouse=None, price_l
 @frappe.whitelist()
 def tax_rows(doctype, template):
     """Tax rows of a tax template, ready to drop into an invoice."""
-    master = "Sales Taxes and Charges Template" if doctype == "Sales Invoice" \
+    master = "Sales Taxes and Charges Template" if doctype in SALES_DOCS \
         else "Purchase Taxes and Charges Template"
     if not template:
         return []
@@ -274,19 +307,27 @@ def _prepare(doc, extras=None):
     if doc.meta.has_field("company"):
         doc.company = company
 
-    if dt in INVOICES:
-        sales = dt == "Sales Invoice"
-        party_f = "customer" if sales else "supplier"
+    if dt in TXN:
+        sales = dt in SALES_DOCS
+        party_f = "party_name" if dt == "Quotation" else ("customer" if sales else "supplier")
+        if dt == "Quotation":
+            doc.quotation_to = "Customer"
         if not doc.get(party_f):
             frappe.throw(_("Customer is required") if sales else _("Supplier is required"))
-        if not doc.get("posting_date"):
-            doc.posting_date = nowdate()
+        date_f = "posting_date" if dt in INVOICES else "transaction_date"
+        if not doc.get(date_f):
+            doc.set(date_f, nowdate())
         if not doc.get("currency"):
             doc.currency = frappe.get_cached_value("Company", company, "default_currency")
-        acc_f = "debit_to" if sales else "credit_to"
-        if not doc.get(acc_f):
-            from erpnext.accounts.party import get_party_account
-            doc.set(acc_f, get_party_account("Customer" if sales else "Supplier", doc.get(party_f), company))
+        if dt in INVOICES:
+            acc_f = "debit_to" if sales else "credit_to"
+            if not doc.get(acc_f):
+                from erpnext.accounts.party import get_party_account
+                doc.set(acc_f, get_party_account("Customer" if sales else "Supplier", doc.get(party_f), company))
+        if dt == "Sales Order" and not doc.get("delivery_date"):
+            doc.delivery_date = frappe.utils.add_days(doc.transaction_date, 7)
+        if dt == "Purchase Order" and not doc.get("schedule_date"):
+            doc.schedule_date = frappe.utils.add_days(doc.transaction_date, 7)
         plist = doc.get("selling_price_list" if sales else "buying_price_list")
         rows = [r for r in doc.get("items") if r.get("item_code")]
         if not rows:
@@ -303,10 +344,27 @@ def _prepare(doc, extras=None):
                         row.set(k, v)
                 elif row.get(k) in (None, ""):
                     row.set(k, v)
+            if dt == "Sales Order" and not row.get("delivery_date"):
+                row.delivery_date = doc.delivery_date
+            if dt == "Purchase Order" and not row.get("schedule_date"):
+                row.schedule_date = doc.schedule_date
         tmpl = doc.get("taxes_and_charges")
         if tmpl and not doc.get("taxes"):
             for r in tax_rows(dt, tmpl):
                 doc.append("taxes", r)
+
+    elif dt == "POS Profile":
+        c = frappe.get_cached_doc("Company", company)
+        if not doc.get("currency"):
+            doc.currency = c.default_currency
+        if not doc.get("write_off_account"):
+            doc.write_off_account = c.write_off_account
+        if not doc.get("write_off_cost_center"):
+            doc.write_off_cost_center = c.cost_center
+        if not doc.get("payments"):
+            frappe.throw(_("Add at least one payment method"))
+        if not any(cint(r.get("default")) for r in doc.get("payments")):
+            doc.payments[0].default = 1
 
     elif dt == "Payment Entry":
         from erpnext.accounts.party import get_party_account
@@ -351,7 +409,7 @@ def _prepare(doc, extras=None):
 @frappe.whitelist()
 def preview(doctype, data):
     """Totals and taxes of an unsaved invoice, calculated by ERPNext."""
-    if doctype not in INVOICES:
+    if doctype not in TXN:
         frappe.throw(_("Not permitted"), frappe.PermissionError)
     d = _json(data, {})
     d["doctype"] = doctype
@@ -400,9 +458,11 @@ def save_doc(doctype, data, submit=0):
         d.pop("docstatus", None)
         doc.update(d)
     else:
-        d.pop("name", None)
+        newname = d.pop("name", None)
         d["docstatus"] = 0
         doc = frappe.get_doc(d)
+        if newname and frappe.get_meta(doctype).autoname in ("Prompt", "prompt"):
+            setattr(doc, "__newname", newname)
     _prepare(doc, extras)
     doc.save()
     _save_extras(doc, extras)
@@ -602,3 +662,24 @@ def save_user(data):
                 doc.append("roles", {"role": r})
     doc.save()
     return {"name": doc.name}
+
+
+CONVERT = {
+    ("Quotation", "Sales Order"): "erpnext.selling.doctype.quotation.quotation.make_sales_order",
+    ("Quotation", "Sales Invoice"): "erpnext.selling.doctype.quotation.quotation.make_sales_invoice",
+    ("Sales Order", "Sales Invoice"): "erpnext.selling.doctype.sales_order.sales_order.make_sales_invoice",
+    ("Purchase Order", "Purchase Invoice"): "erpnext.buying.doctype.purchase_order.purchase_order.make_purchase_invoice",
+}
+
+
+@frappe.whitelist()
+def make_from(doctype, name, target):
+    """Turn a quotation / order into the next document, as an unsaved draft."""
+    path = CONVERT.get((doctype, target))
+    if not path:
+        frappe.throw(_("Not permitted"), frappe.PermissionError)
+    frappe.get_doc(doctype, name).check_permission("read")
+    d = frappe.get_attr(path)(name)
+    if target in INVOICES:
+        d.update_stock = 1
+    return d.as_dict()

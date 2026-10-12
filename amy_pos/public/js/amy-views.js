@@ -101,13 +101,13 @@ V.form = function(dt, name, p, root){
   root.appendChild(h("div",{class:"card"}, h("div",{class:"sk",style:"width:30%;height:22px"}), h("div",{class:"sk",style:"width:80%;margin-top:18px"}), h("div",{class:"sk",style:"width:60%;margin-top:12px"})));
   var load;
   if(isNew){
-    if(p.q.make==="return" || p.q.make==="pay"){
-      load = AMY.rest(p.q.make==="return"?"make_return":"make_payment",{doctype:p.q.dt||dt,name:p.q.src}).then(function(d){ return {doc:d,can:{read:1,write:1,create:1}} });
+    if(p.q.make==="return" || p.q.make==="pay" || p.q.make==="from"){
+      load = (p.q.make==="from"? AMY.rest("make_from",{doctype:p.q.dt,name:p.q.src,target:dt}) : AMY.rest(p.q.make==="return"?"make_return":"make_payment",{doctype:p.q.dt||dt,name:p.q.src})).then(function(d){ return {doc:d,can:{read:1,write:1,create:1}} });
     } else if(p.q.copy){
       load = AMY.rest("get_doc",{doctype:dt,name:p.q.copy}).then(function(r){
         var d=r.doc; ["name","docstatus","creation","modified","owner","modified_by","amended_from","status","outstanding_amount","paid_amount"].forEach(function(k){ delete d[k] });
         (cfg.tables||[]).forEach(function(tb){ (d[tb.f]||[]).forEach(function(r){ delete r.name; delete r.parent }) });
-        d.posting_date = new Date().toISOString().slice(0,10); return {doc:d,can:{read:1,write:1,create:1}} });
+        if(d.posting_date!==undefined) d.posting_date = new Date().toISOString().slice(0,10); if(d.transaction_date!==undefined) d.transaction_date = new Date().toISOString().slice(0,10); return {doc:d,can:{read:1,write:1,create:1}} });
     } else {
       load = AMY.rest("new_defaults",{doctype:dt}).then(function(d){
         (cfg.tables||[]).forEach(function(tb){ d[tb.f]=d[tb.f]||[] });
@@ -123,7 +123,7 @@ V.form = function(dt, name, p, root){
     var submittable = !!cfg.submittable;
     var ro = !isNew && (submittable ? doc.docstatus!==0 : !can.write);
     var saved = isNew? null : doc.name;
-    var ctl = {}, wraps = {}, previewT, totalsEl = h("div"), tableEls = {};
+    var ctl = {}, wraps = {}, secs = [], previewT, totalsEl = h("div"), tableEls = {};
     var form = {doc:doc, ro:ro, isNew:isNew, can:can, set:setVal, ctl:ctl, preview:schedulePreview, cfg:cfg, redraw:function(f){ if(tableEls[f]) tableEls[f].redraw() }};
 
     /* ----- controls ----- */
@@ -189,7 +189,7 @@ V.form = function(dt, name, p, root){
       w.appendChild(c.el); if(fd.hint) w.appendChild(h("small",{class:"mut",text:lb(fd.hint)}));
       wraps[fd.f] = {el:w, dep:fd.dep}; return w;
     }
-    function updateDeps(){ for(var k in wraps){ if(wraps[k].dep) wraps[k].el.classList[wraps[k].dep(doc)?"remove":"add"]("hide") } }
+    function updateDeps(){ secs.forEach(function(x){ x.el.classList[x.show(doc,isNew)?"remove":"add"]("hide") }); for(var k in wraps){ if(wraps[k].dep) wraps[k].el.classList[wraps[k].dep(doc)?"remove":"add"]("hide") } }
 
     /* ----- child tables ----- */
     function recalcRow(r){ if(r.qty!=null && r.rate!=null) r.amount = (Number(r.qty)||0)*(Number(r.rate)||0)*(r.discount_percentage? (1-Number(r.discount_percentage)/100):1) }
@@ -234,7 +234,7 @@ V.form = function(dt, name, p, root){
     }
     function itemPicked(row, code, redraw){
       if(!cfg.invoice){ if(cfg.itemPicked) cfg.itemPicked(row, code, doc, redraw); return }
-      var party = doc.customer || doc.supplier;
+      var party = doc.customer || doc.supplier || doc.party_name;
       AMY.rest("item_details",{item_code:code,doctype:dt,party:party,qty:row.qty||1,warehouse:doc.set_warehouse||null,
         price_list:doc.selling_price_list||doc.buying_price_list||null,currency:doc.currency}).then(function(d){
         KEYS_ITEM.forEach(function(k){ if(d[k]!=null) row[k]=d[k] });
@@ -276,8 +276,8 @@ V.form = function(dt, name, p, root){
     AMY.setTitle(isNew? lb(cfg.newTitle||cfg.label) : doc.name);
     var errBox = h("div",{class:"err hide"}); root.appendChild(errBox);
     (cfg.sections||[]).forEach(function(sec){
-      if(sec.show && !sec.show(doc, isNew)) return;
       var card = h("div",{class:"card sec"});
+      if(sec.show) secs.push({el:card,show:sec.show});
       if(sec.title) card.appendChild(h("h2",{text:lb(sec.title)}));
       var grid = h("div",{class:"fgrid"});
       sec.fields.forEach(function(fd){
@@ -330,7 +330,14 @@ V.form = function(dt, name, p, root){
     var btns = [];
     if(!isNew && cfg.print){ btns.push(act(t("print"),"print","g",function(){ window.open("/printview?doctype="+encodeURIComponent(dt)+"&name="+encodeURIComponent(doc.name)+"&trigger_print=1&no_letterhead=0","_blank") })) }
     if(!isNew && canCreate(dt)){ btns.push(act(t("dup"),"copy","g",function(){ AMY.go(route(cfg,"new")+"?copy="+encodeURIComponent(doc.name)) })) }
-    if(!isNew && cfg.invoice && doc.docstatus===1 && !doc.is_return && canCreate(dt)){
+    if(!isNew && cfg.convert && doc.docstatus===1){
+      cfg.convert.forEach(function(c){
+        var tc = AMY.cfg.docs[c.to];
+        if(!tc || !canCreate(c.to)) return;
+        btns.push(act(lb(c.l),c.icon||"sales","p",function(){ AMY.go("/"+tc.slug+"/new?make=from&dt="+encodeURIComponent(dt)+"&src="+encodeURIComponent(doc.name)) }));
+      });
+    }
+    if(!isNew && cfg.invoice && !cfg.isOrder && doc.docstatus===1 && !doc.is_return && canCreate(dt)){
       btns.push(act(t("returnDoc"),"undo","g",function(){ AMY.go(route(cfg,"new")+"?make=return&dt="+encodeURIComponent(dt)+"&src="+encodeURIComponent(doc.name)) }));
     }
     if(!isNew && cfg.invoice && doc.docstatus===1 && Number(doc.outstanding_amount)>0 && AMY.boot.perms["Payment Entry"] && AMY.boot.perms["Payment Entry"].create){

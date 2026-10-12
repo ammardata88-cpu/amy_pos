@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>AMY - تسجيل الدخول</title>
+<link rel="icon" href="/assets/amy_pos/images/amy-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#0B1424;--mut:#667085;--line:#E4E8EF;--brand:#0A8FB3;--brand2:#10AFD7;--bad:#B42318;--badb:#FCE9E7;--f:"IBM Plex Sans Arabic","Segoe UI",Tahoma,system-ui,sans-serif}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{font-family:var(--f);color:var(--ink);background:#fff;-webkit-font-smoothing:antialiased;line-height:1.6}
+.wrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);min-height:100vh}
+.panel{display:flex;flex-direction:column;padding:28px 56px}
+.top{display:flex;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:12px;font-weight:700;font-size:21px;letter-spacing:.3px}
+.brand img{width:42px;height:42px;border-radius:12px}
+.lang{border:1px solid var(--line);background:#fff;border-radius:10px;padding:7px 14px;font:inherit;font-weight:600;cursor:pointer;color:var(--ink)}
+.lang:hover{border-color:var(--brand);color:var(--brand)}
+.mid{flex:1;display:flex;align-items:center}
+.box{width:100%;max-width:400px;margin:0 auto}
+h1{font-size:30px;line-height:1.25;margin:0 0 8px;font-weight:700}
+.sub{color:var(--mut);margin:0 0 28px}
+label{display:block;font-weight:600;font-size:14px;margin:0 0 6px}
+.f{margin-bottom:18px;position:relative}
+input{width:100%;height:48px;border:1px solid #D0D5DD;border-radius:11px;padding:0 14px;font:inherit;font-size:15px;color:var(--ink);background:#fff;transition:border .15s,box-shadow .15s}
+input:focus{outline:0;border-color:var(--brand2);box-shadow:0 0 0 4px rgba(16,175,215,.16)}
+.eye{position:absolute;inset-inline-end:6px;bottom:6px;border:0;background:none;color:var(--mut);cursor:pointer;height:36px;padding:0 10px;font:inherit;font-size:13px;font-weight:600}
+.btn{width:100%;height:50px;border:0;border-radius:12px;background:linear-gradient(135deg,var(--brand2),var(--brand));color:#fff;font:inherit;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 8px 20px -8px rgba(10,143,179,.6);transition:transform .1s,box-shadow .15s}
+.btn:hover{box-shadow:0 10px 24px -8px rgba(10,143,179,.75)}
+.btn:active{transform:translateY(1px)}
+.btn[disabled]{opacity:.7;cursor:wait}
+.err{background:var(--badb);color:var(--bad);border-radius:10px;padding:10px 14px;font-size:14px;margin-bottom:16px;display:none}
+.ok{background:#E4F5EC;color:#0F7A55;border-radius:10px;padding:10px 14px;font-size:14px;margin-bottom:16px;display:none}
+.row{display:flex;justify-content:flex-end;margin:-6px 0 20px}
+.lnk{background:none;border:0;color:var(--brand);font:inherit;font-weight:600;cursor:pointer;padding:0;font-size:14px}
+.foot{color:#98A2B3;font-size:13px}
+.hero{background:radial-gradient(1200px 600px at 80% -10%,#14405f 0,transparent 60%),linear-gradient(160deg,#0A1626,#07101D);color:#fff;display:flex;flex-direction:column;justify-content:center;padding:56px;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;width:520px;height:520px;border-radius:50%;border:1px solid rgba(111,216,242,.18);inset-inline-end:-160px;bottom:-180px;box-shadow:0 0 0 70px rgba(111,216,242,.04),0 0 0 140px rgba(111,216,242,.03)}
+.hero h2{font-size:34px;line-height:1.35;margin:0 0 14px;font-weight:700;max-width:480px}
+.hero p{color:#9FB1C8;max-width:440px;margin:0 0 34px;font-size:16px}
+.pts{display:grid;gap:14px;max-width:440px;position:relative;z-index:1}
+.pt{display:flex;gap:14px;align-items:flex-start}
+.pt i{flex:none;width:36px;height:36px;border-radius:10px;background:rgba(16,175,215,.16);display:grid;place-items:center;color:#6FD8F2}
+.pt svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.pt b{display:block;font-size:15px}.pt span{color:#8FA6BF;font-size:13.5px}
+@media(max-width:900px){.wrap{grid-template-columns:1fr}.hero{display:none}.panel{padding:22px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+ <section class="panel">
+  <div class="top"><div class="brand"><img src="/assets/amy_pos/images/amy-logo.png" alt=""><span>AMY</span></div><button class="lang" id="lang" type="button">EN</button></div>
+  <div class="mid"><form class="box" id="f" autocomplete="on">
+   <h1 id="t1"></h1><p class="sub" id="t2"></p>
+   <div class="err" id="err" role="alert"></div><div class="ok" id="ok"></div>
+   <div class="f"><label for="u" id="lu"></label><input id="u" name="usr" autocomplete="username" autocapitalize="off" spellcheck="false" required></div>
+   <div class="f" id="pw"><label for="p" id="lp"></label><input id="p" name="pwd" type="password" autocomplete="current-password" required><button class="eye" id="eye" type="button"></button></div>
+   <div class="row"><button class="lnk" id="forgot" type="button"></button></div>
+   <button class="btn" id="go" type="submit"></button>
+  </form></div>
+  <div class="foot">AMY by AMY Tech</div>
+ </section>
+ <aside class="hero">
+  <h2 id="h2"></h2><p id="hp"></p>
+  <div class="pts" id="pts"></div>
+ </aside>
+</div>
+<script>
+(function(){
+"use strict";
+var T = {
+ ar:{t1:"أهلاً بعودتك",t2:"سجّل الدخول لإدارة شركتك.",lu:"البريد الإلكتروني أو اسم المستخدم",lp:"كلمة المرور",go:"تسجيل الدخول",forgot:"نسيت كلمة المرور؟",show:"إظهار",hide:"إخفاء",
+  bad:"بيانات الدخول غير صحيحة.",net:"تعذّر الاتصال. جرّب مرة أخرى.",sent:"أرسلنا رابط استعادة كلمة المرور إلى بريدك.",need:"اكتب بريدك الإلكتروني أولاً.",
+  h2:"كل شركتك في مكان واحد.",hp:"مبيعات ومشتريات ومخزون ومحاسبة وفوترة إلكترونية، بواجهة واحدة.",
+  pts:[["فواتير ونقاط بيع سريعة","من الكاشير للفاتورة الضريبية بدون تعقيد."],["مخزون ومحاسبة مترابطة","كل حركة تنعكس مباشرة على حساباتك."],["مستخدمون بصلاحيات","كاشير ومحاسب ومدير، كل واحد يرى ما يخصه."]]},
+ en:{t1:"Welcome back",t2:"Sign in to manage your business.",lu:"Email or username",lp:"Password",go:"Sign in",forgot:"Forgot password?",show:"Show",hide:"Hide",
+  bad:"Incorrect email or password.",net:"Could not connect. Try again.",sent:"We sent a password reset link to your email.",need:"Enter your email first.",
+  h2:"Your whole business in one place.",hp:"Sales, purchasing, stock, accounting and e-invoicing in one interface.",
+  pts:[["Fast invoices and point of sale","From the till to a tax invoice, no friction."],["Stock and books stay in sync","Every movement lands in your accounts."],["Users with roles","Cashier, accountant, manager: each sees their own work."]]}
+};
+var lang="ar"; try{ lang = localStorage.getItem("amy_lang") || "ar" }catch(e){}
+var $ = function(i){ return document.getElementById(i) };
+var ICONS = ['<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>','<path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>','<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.6a3.4 3.4 0 0 1 0 6.6M18.5 14.6a6 6 0 0 1 3 5.4"/>'];
+function paint(){
+  var s = T[lang]; document.documentElement.lang = lang; document.documentElement.dir = lang==="ar"?"rtl":"ltr";
+  $("t1").textContent=s.t1; $("t2").textContent=s.t2; $("lu").textContent=s.lu; $("lp").textContent=s.lp; $("go").textContent=s.go;
+  $("forgot").textContent=s.forgot; $("h2").textContent=s.h2; $("hp").textContent=s.hp; $("lang").textContent = lang==="ar"?"EN":"عربي";
+  $("eye").textContent = $("p").type==="password"? s.show : s.hide;
+  document.title = "AMY - " + s.go;
+  $("pts").innerHTML = s.pts.map(function(x,i){ return '<div class="pt"><i><svg viewBox="0 0 24 24">'+ICONS[i]+'</svg></i><div><b>'+x[0]+'</b><span>'+x[1]+'</span></div></div>' }).join("");
+}
+function msg(id, text){ var e=$(id); e.textContent=text||""; e.style.display=text?"block":"none" }
+$("lang").onclick=function(){ lang = lang==="ar"?"en":"ar"; try{ localStorage.setItem("amy_lang",lang) }catch(e){} paint() };
+$("eye").onclick=function(){ $("p").type = $("p").type==="password"?"text":"password"; paint() };
+$("f").onsubmit=function(ev){
+  ev.preventDefault(); msg("err"); msg("ok");
+  var b=$("go"); b.disabled=true;
+  var body = new URLSearchParams(); body.set("usr",$("u").value.trim()); body.set("pwd",$("p").value);
+  fetch("/api/method/login",{method:"POST",credentials:"same-origin",headers:{"Accept":"application/json","Content-Type":"application/x-www-form-urlencoded"},body:body.toString()})
+  .then(function(r){ return r.json().catch(function(){ return {} }).then(function(j){ return {ok:r.ok,j:j} }) })
+  .then(function(x){
+    if(x.ok){ var n = new URLSearchParams(location.search).get("next"); location.href = (n && n.charAt(0)==="/" && n.charAt(1)!=="/")? n : "/amy"; return }
+    b.disabled=false; msg("err", T[lang].bad);
+  }).catch(function(){ b.disabled=false; msg("err", T[lang].net) });
+};
+$("forgot").onclick=function(){
+  var u=$("u").value.trim(); msg("err"); msg("ok");
+  if(!u){ msg("err", T[lang].need); $("u").focus(); return }
+  var body = new URLSearchParams(); body.set("user",u);
+  fetch("/api/method/frappe.core.doctype.user.user.reset_password",{method:"POST",credentials:"same-origin",headers:{"Accept":"application/json","Content-Type":"application/x-www-form-urlencoded"},body:body.toString()})
+  .then(function(){ msg("ok", T[lang].sent) }).catch(function(){ msg("err", T[lang].net) });
+};
+paint();
+})();
+</script>
+</body>
+</html>
