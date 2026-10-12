@@ -240,4 +240,118 @@ AMY.cfg.settings.splice(2,0,
  {to:"/brands",icon:"tag",l:["الماركات","Brands"],d:["ماركات المنتجات.","Product brands."],dt:"Brand"},
  {to:"/cost-centers",icon:"building",l:["مراكز التكلفة","Cost centers"],d:["توزيع الإيرادات والمصروفات.","Split income and expenses."],dt:"Cost Center"},
  {to:"/territories",icon:"globe",l:["المناطق","Territories"],d:["مناطق العملاء.","Customer regions."],dt:"Territory"});
+
+/* ---------- quick setup: make the system ready to trade in one click ---------- */
+var V = AMY.views;
+function setupText(ar){ return ar? {
+  title:"التهيئة السريعة", sub:"يفحص النظام ويضيف الناقص فقط: ضريبة 15%، طرق الدفع، المستودع، ملف الكاشير. لا يغيّر أي شيء موجود.",
+  run:"جهّز النظام تلقائيًا", running:"جارٍ التجهيز…", ready:"النظام جاهز للبيع والشراء.", done:"تم التجهيز", missing:" بنود تحتاج تجهيز",
+  zatca:"ربط الفوترة الإلكترونية مع هيئة الزكاة خطوة منفصلة تتم مرة واحدة.", zbtn:"فتح إعداد الفوترة الإلكترونية", fail:"تعذّر تجهيز بعض البنود، راجع سجل الأخطاء."
+ } : {
+  title:"Quick setup", sub:"Checks the system and adds only what is missing: 15% VAT, payment methods, warehouse, the till profile. Nothing existing is changed.",
+  run:"Set up automatically", running:"Setting up…", ready:"The system is ready to sell and buy.", done:"Set up", missing:" items need setup",
+  zatca:"Connecting e-invoicing to the tax authority is a separate one-time step.", zbtn:"Open e-invoicing setup", fail:"Some items could not be set up. Check the error log."
+ };
+}
+V.setup = function(root){
+  var ar = AMY.lang==="ar", T = setupText(ar), box = h("div");
+  AMY.setTitle(T.title);
+  root.appendChild(AMY.pageHeader({title:T.title, sub:T.sub}));
+  root.appendChild(box);
+  function paint(st){
+    AMY.clear(box);
+    var bad = st.checks.filter(function(x){ return !x.ok }).length;
+    box.appendChild(h("div",{class:"note "+(bad?"warn":"ok")}, h("b",{text:bad? bad+T.missing : T.ready}),
+      bad? h("button",{class:"btn p",type:"button",onclick:run},AMY.icon("check"),T.run) : null));
+    var ul = h("ul",{class:"chk-list"});
+    st.checks.forEach(function(x){ ul.appendChild(h("li",{class:x.ok?"ok":"no"}, h("i",null,AMY.icon(x.ok?"check":"clock")), h("span",{text:ar?x.ar:x.en}))) });
+    box.appendChild(ul);
+    if(st.zatca) box.appendChild(h("div",{class:"hd",style:"margin-top:36px"},h("h2",{text:"ZATCA"}),h("p",{class:"mut",text:T.zatca}),h("a",{class:"btn g",href:"/app/zatca-business-settings"},AMY.icon("shield"),T.zbtn)));
+  }
+  function run(){
+    var b = box.querySelector(".note .btn"); if(b){ b.disabled = true; b.lastChild.textContent = T.running }
+    AMY.rest("quick_setup",{}).then(function(st){ paint(st); if(st.errors && st.errors.length) AMY.toast(T.fail,"bad"); else AMY.toast(T.done,"ok") }).catch(function(e){ AMY.fail(e); load() });
+  }
+  function load(){ AMY.rest("setup_status",{}).then(paint).catch(AMY.fail) }
+  load();
+};
+var dash = V.dashboard;
+V.dashboard = function(root){
+  dash(root);
+  if(!AMY.boot.is_admin) return;
+  AMY.rest("setup_status",{}).then(function(st){
+    var bad = st.checks.filter(function(x){ return !x.ok }).length; if(!bad) return;
+    var ar = AMY.lang==="ar", T = setupText(ar);
+    var n = h("div",{class:"note warn",style:"margin-bottom:28px"}, h("b",{text:bad+T.missing}), h("a",{class:"btn p",href:"#/setup"},AMY.icon("check"),T.run));
+    root.insertBefore(n, root.children[1] || null);
+  }).catch(function(){});
+};
+AMY.cfg.nav.forEach(function(g){ if(g.id==="set") g.k.splice(1,0,{to:"/setup",l:["التهيئة السريعة","Quick setup"],admin:1}) });
+AMY.cfg.settings.unshift({to:"/setup",icon:"check",l:["التهيئة السريعة","Quick setup"],d:["جهّز الضريبة وطرق الدفع والمستودع وملف الكاشير بضغطة.","Set up VAT, payment methods, warehouse and the till in one click."],admin:1});
+
+/* ---------- command palette (Ctrl K): jump to any page, create anything, find records ---------- */
+(function(){
+  var ar = function(){ return AMY.lang==="ar" };
+  var RECORDS = [["Customer","customers","customer_name",["name","customer_name","mobile_no"]],["Item","items","item_name",["name","item_name","item_code"]],
+    ["Supplier","suppliers","supplier_name",["name","supplier_name"]],["Sales Invoice","sales-invoices","customer_name",["name","customer_name"]]];
+  function pages(){
+    var out = [];
+    Object.keys(AMY.cfg.docs).forEach(function(dt){
+      var c = AMY.cfg.docs[dt], p = AMY.boot.perms[dt]; if(!p || !p.read) return;
+      out.push({t:AMY.lb(c.plural), hint:ar()?"صفحة":"Page", go:"/"+c.slug, icon:c.icon||"list"});
+      if(p.create && !c.noNew) out.push({t:AMY.lb(c.newLabel||c.label), hint:ar()?"إنشاء":"Create", go:"/"+c.slug+"/new", icon:"plus"});
+    });
+    [["/reports",["التقارير","Reports"]],["/settings",["الإعدادات","Settings"]],["/users",["المستخدمون والصلاحيات","Users & roles"]],["/setup",["التهيئة السريعة","Quick setup"]]].forEach(function(x){
+      if((x[0]==="/users"||x[0]==="/setup") && !AMY.boot.is_admin) return;
+      out.push({t:AMY.lb(x[1]), hint:ar()?"صفحة":"Page", go:x[0], icon:x[0]==="/reports"?"rep":"set"});
+    });
+    return out;
+  }
+  function open(){
+    var ov = h("div",{class:"ov pal"}), box = h("div",{class:"palbox"}), inp = h("input",{class:"palin",type:"text",placeholder:ar()?"ابحث عن صفحة أو عميل أو منتج أو فاتورة…":"Search pages, customers, items, invoices…",autocomplete:"off"}), list = h("div",{class:"pall"});
+    box.appendChild(h("div",{class:"palhd"},AMY.icon("search"),inp,h("kbd",{text:"Esc"}))); box.appendChild(list); ov.appendChild(box); document.body.appendChild(ov);
+    var items = [], sel = 0, token = 0, all = pages();
+    function close(){ document.removeEventListener("keydown",key,true); ov.remove() }
+    function pick(i){ var it = items[i]; if(!it) return; close(); AMY.go(it.go) }
+    function draw(){
+      AMY.clear(list);
+      if(!items.length){ list.appendChild(h("div",{class:"palno",text:ar()?"لا نتائج":"No results"})); return }
+      items.forEach(function(it,i){
+        list.appendChild(h("button",{type:"button",class:i===sel?"on":"",onclick:function(){ pick(i) },onmousemove:function(){ if(sel!==i){ sel=i; draw() } }},
+          AMY.icon(it.icon||"list"), h("span",{class:"t",text:it.t}), it.sub? h("span",{class:"mut",text:it.sub}) : null, h("em",{text:it.hint})));
+      });
+      var on = list.querySelector(".on"); if(on && on.scrollIntoView) on.scrollIntoView({block:"nearest"});
+    }
+    function run(){
+      var q = inp.value.trim().toLowerCase(), my = ++token;
+      items = (q? all.filter(function(x){ return x.t.toLowerCase().indexOf(q)>=0 }) : all.filter(function(x){ return x.hint===(ar()?"صفحة":"Page") }).slice(0,8)).slice(0,8);
+      sel = 0; draw();
+      if(q.length<2) return;
+      RECORDS.forEach(function(r){
+        if(!(AMY.boot.perms[r[0]] && AMY.boot.perms[r[0]].read)) return;
+        AMY.rest("list_docs",{doctype:r[0],fields:["name",r[2]],search:q,search_fields:r[3],limit:4}).then(function(res){
+          if(my!==token) return;
+          res.rows.forEach(function(x){ items.push({t:x[r[2]]||x.name, sub:x[r[2]] && x[r[2]]!==x.name? x.name : "", hint:AMY.lb(AMY.cfg.docs[r[0]].label), go:"/"+r[1]+"/"+encodeURIComponent(x.name), icon:AMY.cfg.docs[r[0]].icon}) });
+          draw();
+        }).catch(function(){});
+      });
+    }
+    function key(e){
+      if(e.key==="Escape"){ e.preventDefault(); close() }
+      else if(e.key==="ArrowDown"){ e.preventDefault(); sel = Math.min(items.length-1, sel+1); draw() }
+      else if(e.key==="ArrowUp"){ e.preventDefault(); sel = Math.max(0, sel-1); draw() }
+      else if(e.key==="Enter"){ e.preventDefault(); pick(sel) }
+    }
+    ov.addEventListener("mousedown",function(e){ if(e.target===ov) close() });
+    document.addEventListener("keydown",key,true); inp.addEventListener("input",run); run(); inp.focus();
+  }
+  var host = document.querySelector(".top>.in"), anchor = document.getElementById("ptitle");
+  if(host && anchor){
+    var b = h("button",{type:"button",class:"palbtn",id:"palBtn",onclick:open}, AMY.icon("search"), h("span",{id:"palTxt"}), h("kbd",{text:"Ctrl K"}));
+    host.insertBefore(b, anchor);
+    var setTxt = function(){ document.getElementById("palTxt").textContent = ar()? "ابحث أو انتقل إلى…" : "Search or jump to…" };
+    setTxt(); document.getElementById("lang").addEventListener("click",function(){ setTimeout(setTxt,0) });
+  }
+  document.addEventListener("keydown",function(e){ if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==="k"){ e.preventDefault(); if(!document.querySelector(".pal")) open() } });
+})();
 })();

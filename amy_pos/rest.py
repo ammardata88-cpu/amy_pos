@@ -683,3 +683,22 @@ def make_from(doctype, name, target):
     if target in INVOICES:
         d.update_stock = 1
     return d.as_dict()
+
+
+# ---------------------------------------------------------------- quick setup
+@frappe.whitelist()
+def setup_status():
+    """What is ready and what is missing for the company to trade."""
+    if "System Manager" not in frappe.get_roles():
+        frappe.throw(_("Not permitted"), frappe.PermissionError)
+    from amy_pos.setup import defaults
+    return defaults.status()
+
+
+@frappe.whitelist()
+def quick_setup():
+    """Create the missing defaults (VAT, payment methods, warehouse, POS profile...)."""
+    if "System Manager" not in frappe.get_roles():
+        frappe.throw(_("Not permitted"), frappe.PermissionError)
+    from amy_pos.setup import defaults
+    return defaults.apply()

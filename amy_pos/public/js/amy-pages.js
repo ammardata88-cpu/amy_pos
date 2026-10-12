@@ -19,9 +19,7 @@ function d(k){ return D[AMY.lang][k] }
 V.dashboard = function(root){
   AMY.setTitle(t("home"));
   var name = (AMY.boot.user.full_name||"").split(" ")[0];
-  root.appendChild(AMY.pageHeader({title:t("hello")+name, sub:new Date().toLocaleDateString(AMY.locale(),{weekday:"long",year:"numeric",month:"long",day:"numeric"}),
-    actions:[AMY.boot.apps.pos_next? h("a",{class:"btn g",href:"/pos"}, AMY.icon("cart"), t("pos")) : null,
-      (AMY.boot.perms["Sales Invoice"]||{}).create? h("a",{class:"btn p",href:"#/sales-invoices/new"}, AMY.icon("plus"), AMY.lang==="ar"?"فاتورة بيع":"Sales invoice") : null]}));
+  root.appendChild(AMY.pageHeader({title:t("hello")+name, sub:new Date().toLocaleDateString(AMY.locale(),{weekday:"long",year:"numeric",month:"long",day:"numeric"})}));
   var kp = h("section",{class:"gd k4"}), r1 = h("section",{class:"gd c21 mt"}), r2 = h("section",{class:"gd mt"}), r3 = h("section",{class:"gd c3 mt"});
   [kp,r1,r2,r3].forEach(function(x){ root.appendChild(x) });
   [0,1,2,3].forEach(function(){ kp.appendChild(h("div",{class:"card"},h("div",{class:"sk",style:"width:40%"}),h("div",{class:"sk",style:"width:60%;height:26px;margin-top:14px"}))) });

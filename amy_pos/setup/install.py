@@ -12,7 +12,7 @@ wizard has created the company:
 import frappe
 
 APP_NAME = "AMY POS"
-LOGO = "/assets/amy_pos/images/logo.svg"
+LOGO = "/assets/amy_pos/images/amy-logo.png"
 WALKIN = "Walk-in Customer"
 
 # Modules a customer keeps. Everything else is hidden by the SaaS provisioner
@@ -22,7 +22,11 @@ ALLOWED_MODULES = ["Accounts", "Selling", "Buying", "Stock"]
 
 def after_install():
     apply_branding()
-    setup_company_defaults()
+    try:
+        from amy_pos.setup import defaults
+        defaults.apply()
+    except Exception:
+        frappe.log_error(title="AMY POS: default setup")
     frappe.db.commit()
 
 

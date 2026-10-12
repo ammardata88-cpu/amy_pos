@@ -273,3 +273,37 @@ main{flex:1;padding:32px 40px 72px;width:100%;max-width:1320px;margin:0 auto}
 [dir=rtl] .sel{background-position:left 11px center}
 [dir=ltr] .sel{background-position:right 11px center}
 @media(max-width:1100px){.k4>.card:nth-child(n+3){border-top:1px solid var(--rule)}.k4>.card:nth-child(even){border-inline-start:1px solid var(--rule)}}
+
+.note{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:14px 18px;border-inline-start:3px solid var(--brand2);background:var(--brand-l);border-radius:0 6px 6px 0}
+[dir=rtl] .note{border-radius:6px 0 0 6px}
+.note.warn{border-color:#C98A1B;background:#FBF3E2}
+.note.ok{border-color:var(--ok);background:var(--okb)}
+.note b{font-weight:600}
+.chk-list{list-style:none;margin:28px 0 0;padding:0;border-top:2px solid var(--ink)}
+.chk-list li{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--rule)}
+.chk-list i{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;flex:none}
+.chk-list i svg{width:15px;height:15px}
+.chk-list .ok i{background:var(--ok);color:#fff}
+.chk-list .no i{background:var(--warnb);color:var(--warn)}
+.chk-list .no span{font-weight:600}
+
+.palbtn{display:flex;align-items:center;gap:10px;height:36px;min-width:300px;padding:0 10px;border:1px solid #CDD4DB;border-radius:6px;background:var(--paper);color:var(--mut);cursor:pointer;text-align:start}
+.palbtn:hover{border-color:#A9B4BE}
+.palbtn svg{width:16px;height:16px;color:var(--faint)}
+.palbtn span{flex:1}
+kbd{font-family:inherit;font-size:11px;color:var(--mut);border:1px solid var(--rule);border-radius:4px;padding:1px 6px;background:var(--ground);direction:ltr}
+.pal{align-items:flex-start;padding-top:12vh}
+.palbox{width:min(600px,100%);background:var(--paper);border-radius:10px;box-shadow:var(--sh2);overflow:hidden}
+.palhd{display:flex;align-items:center;gap:10px;padding:0 16px;border-bottom:1px solid var(--rule)}
+.palhd svg{color:var(--faint)}
+.palin{flex:1;height:52px;border:0;outline:0;font-size:15px;background:none}
+.pall{max-height:50vh;overflow:auto;padding:6px}
+.pall button{display:flex;align-items:center;gap:12px;width:100%;border:0;background:none;padding:9px 10px;border-radius:6px;cursor:pointer;text-align:start}
+.pall button.on{background:var(--brand-l)}
+.pall button svg{color:var(--faint);flex:none}
+.pall button.on svg{color:var(--brand)}
+.pall .t{font-weight:500}
+.pall em{margin-inline-start:auto;font-style:normal;font-size:12px;color:var(--faint)}
+.palno{padding:26px;text-align:center;color:var(--mut)}
+[dir=rtl] .kpi .v{text-align:right}
+@media(max-width:900px){.palbtn{min-width:0;flex:none;width:36px;padding:0;justify-content:center}.palbtn span,.palbtn kbd{display:none}}

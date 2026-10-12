@@ -48,6 +48,7 @@ AMY.dispatch = function(p, root){
   if(s[0]==="report") return V.report(s[1], root);
   if(s[0]==="users"){ if(!AMY.boot.is_admin) return root.appendChild(AMY.emptyBox(t("noperm"),"")); return V.users(root) }
   if(s[0]==="settings") return V.settings(root);
+  if(s[0]==="setup"){ if(!AMY.boot.is_admin) return root.appendChild(AMY.emptyBox(t("noperm"),"")); return V.setup(root) }
   var dt = bySlug[s[0]];
   if(dt){
     if(!can(dt)) return root.appendChild(AMY.emptyBox(t("noperm"),""));
