@@ -50,7 +50,7 @@ V.dashboard = function(root){
     var db = h("div");
     if(s||p){
       var mx = Math.max(s?s.receivable.value:0, p?p.payable.value:0, 1);
-      [[d("recv"),s&&s.receivable,"#0F7A55"],[d("pay"),p&&p.payable,"#E5A33A"]].forEach(function(y){
+      [[d("recv"),s&&s.receivable,"#1B7A4B"],[d("pay"),p&&p.payable,"#C98A1B"]].forEach(function(y){
         var m = h("div",{class:"meter"}, h("i",{style:"width:"+(y[1]?Math.max(2,y[1].value/mx*100):0)+"%;background:"+y[2]}));
         db.appendChild(h("div",{class:"split"}, h("div",{class:"row"}, h("span",{text:y[0]}), h("b",{text:y[1]? AMY.num(y[1].value,0)+" "+cur : "—"})), m,
           h("div",{class:"mut",style:"font-size:13px;margin-top:6px",text:y[1]? y[1].count+" "+d("inv") : ""})));
@@ -68,7 +68,7 @@ V.dashboard = function(root){
         h("td",{class:"num end",text:AMY.num(r.base_grand_total,2)+" "+cur}), h("td",null,AMY.statusPill(r.status)), h("td",null, r.zatca? AMY.statusPill(r.zatca) : h("span",{class:"mut",text:"—"})));
       tb.appendChild(tr);
     });
-    r2.appendChild(h("div",{class:"card flush"}, h("div",{style:"padding:20px 22px 6px"}, h("h2",{style:"margin:0"}, h("span",{text:d("recent")}), h("a",{href:"#/sales-invoices",text:d("all")}))),
+    r2.appendChild(h("div",{class:"card flush"}, h("div",{class:"hd"}, h("h2",{style:"margin:0"}, h("span",{text:d("recent")}), h("a",{href:"#/sales-invoices",text:d("all")}))),
       h("div",{class:"scroll"}, h("table",{class:"tbl"}, h("thead",null,h("tr",null,[d("cInv"),d("cCust"),d("cDate"),d("cAmt"),d("cSt"),d("cZ")].map(function(c,i){ return h("th",{class:i===3?"end":"",text:c}) }))), tb))));
     if(x.zatca!=null){
       var zb = h("div"); donut(zb, x.zatca); r3.appendChild(h("div",{class:"card"}, h("h2",{text:d("z")}), zb));
@@ -89,20 +89,20 @@ V.dashboard = function(root){
     else if(!x.top_items.length) ul.appendChild(h("li",{class:"empty",text:t("noData")}));
     else { var m=Math.max.apply(null,x.top_items.map(function(y){return Number(y.amount)}).concat([1]));
       x.top_items.forEach(function(r){ ul.appendChild(h("li",null, h("div",{class:"r"}, h("span",{text:r.item_name||r.item_code}), h("span",{class:"num",style:"font-weight:600",text:AMY.num(r.amount,0)+" "+cur})),
-        h("div",{class:"meter"},h("i",{style:"width:"+Math.max(3,Number(r.amount)/m*100)+"%;background:#0A8FB3"})))) }); }
+        h("div",{class:"meter"},h("i",{style:"width:"+Math.max(3,Number(r.amount)/m*100)+"%;background:#0B7CA4"})))) }); }
     return ul;
   }
   function chart(box, series, cur){
     var W=600,H=190,P=8, max=Math.max.apply(null,series.map(function(y){return y.total}).concat([1]));
     var pts = series.map(function(y,i){ return [P+i*(W-2*P)/(series.length-1), H-P-(y.total/max)*(H-2*P-14)] });
     var dd="M"+pts[0][0]+","+pts[0][1];
-    for(var i=1;i<pts.length;i++){ var mx=(pts[i-1][0]+pts[i][0])/2; dd+=" C"+mx+","+pts[i-1][1]+" "+mx+","+pts[i][1]+" "+pts[i][0]+","+pts[i][1] }
+    for(var i=1;i<pts.length;i++){ dd+=" L"+pts[i][0]+","+pts[i][1] }
     var svg = svgEl("svg",{viewBox:"0 0 "+W+" "+H,preserveAspectRatio:"none"}), defs=svgEl("defs",{}), gr=svgEl("linearGradient",{id:"ag",x1:"0",y1:"0",x2:"0",y2:"1"});
     gr.appendChild(svgEl("stop",{offset:"0","stop-color":"#10AFD7","stop-opacity":".3"})); gr.appendChild(svgEl("stop",{offset:"1","stop-color":"#10AFD7","stop-opacity":"0"}));
     defs.appendChild(gr); svg.appendChild(defs);
-    [0.25,0.5,0.75,1].forEach(function(f){ var y=H-P-f*(H-2*P-14); svg.appendChild(svgEl("line",{x1:0,x2:W,y1:y,y2:y,stroke:"#EEF1F6","stroke-width":1,"vector-effect":"non-scaling-stroke"})) });
-    svg.appendChild(svgEl("path",{d:dd+" L"+pts[pts.length-1][0]+","+H+" L"+pts[0][0]+","+H+" Z",fill:"url(#ag)"}));
-    svg.appendChild(svgEl("path",{d:dd,fill:"none",stroke:"#0A8FB3","stroke-width":2.5,"stroke-linecap":"round","vector-effect":"non-scaling-stroke"}));
+    [0.25,0.5,0.75,1].forEach(function(f){ var y=H-P-f*(H-2*P-14); svg.appendChild(svgEl("line",{x1:0,x2:W,y1:y,y2:y,stroke:"#E7EAEE","stroke-width":1,"vector-effect":"non-scaling-stroke"})) });
+    svg.appendChild(svgEl("path",{d:dd,fill:"none",stroke:"#0B7CA4","stroke-width":1.75,"stroke-linecap":"round","stroke-linejoin":"round","vector-effect":"non-scaling-stroke"}));
+    svg.appendChild(svgEl("line",{x1:0,x2:W,y1:H-P,y2:H-P,stroke:"#111C26","stroke-width":1,"vector-effect":"non-scaling-stroke"}));
     box.appendChild(svg);
     var xl = h("div",{class:"xl"}); [0,4,8,13].forEach(function(i){ xl.appendChild(h("span",{text:series[i].date.slice(5)})) }); box.appendChild(xl);
     var tip = h("div",{class:"tip"}); box.appendChild(tip);

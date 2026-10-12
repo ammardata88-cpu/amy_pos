@@ -25,7 +25,7 @@ function invoicePanel(party){
     var h = AMY.h, body = h("tbody"), card = h("div",{class:"card flush sec"});
     var isC = party==="customer", dt = isC? "Sales Invoice" : "Purchase Invoice", slug = isC? "sales-invoices" : "purchase-invoices";
     if(!(AMY.boot.perms[dt] && AMY.boot.perms[dt].read)) return;
-    card.appendChild(h("div",{style:"padding:20px 22px 4px"}, h("h2",{style:"margin:0"}, h("span",{text:AMY.lang==="ar"?"آخر الفواتير":"Recent invoices"}))));
+    card.appendChild(h("div",{class:"hd"}, h("h2",{style:"margin:0"}, h("span",{text:AMY.lang==="ar"?"آخر الفواتير":"Recent invoices"}))));
     card.appendChild(h("div",{class:"scroll"}, h("table",{class:"tbl"}, body)));
     root.appendChild(card);
     var f = {docstatus:["<",2]}; f[party] = doc.name;
@@ -202,7 +202,7 @@ docs["Item"] = {
  panels:[function(doc, root){
   var h=AMY.h, body=h("tbody"), card=h("div",{class:"card flush sec"});
   if(!(AMY.boot.perms["Bin"] && AMY.boot.perms["Bin"].read)) return;
-  card.appendChild(h("div",{style:"padding:20px 22px 4px"},h("h2",{style:"margin:0"},h("span",{text:AMY.lang==="ar"?"الرصيد في المستودعات":"Stock by warehouse"}))));
+  card.appendChild(h("div",{class:"hd"},h("h2",{style:"margin:0"},h("span",{text:AMY.lang==="ar"?"الرصيد في المستودعات":"Stock by warehouse"}))));
   card.appendChild(h("div",{class:"scroll"},h("table",{class:"tbl"},h("thead",null,h("tr",null,[AMY.lang==="ar"?"المستودع":"Warehouse",AMY.lang==="ar"?"الرصيد":"On hand",AMY.lang==="ar"?"محجوز":"Reserved",AMY.lang==="ar"?"القيمة":"Value"].map(function(x,i){ return h("th",{class:i?"end":"",text:x}) }))),body)));
   root.appendChild(card);
   AMY.rest("list_docs",{doctype:"Bin",fields:["warehouse","actual_qty","reserved_qty","stock_value"],filters:{item_code:doc.name},limit:50}).then(function(r){
