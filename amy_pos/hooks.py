@@ -29,3 +29,7 @@ website_context = {
 
 after_install = "amy_pos.setup.install.after_install"
 after_migrate = "amy_pos.setup.install.after_migrate"
+
+# Customers land on the AMY console after login when the site has `amy_console: 1`
+# in site_config.json (set by scripts/install-site.sh). Administrator keeps /app.
+on_session_creation = "amy_pos.setup.login.on_session_creation"

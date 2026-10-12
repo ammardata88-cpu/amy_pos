@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>AMY</title>
+<link rel="icon" href="/assets/amy_pos/images/logo.svg">
+<style>
+:root{--brand:#10AFD7;--brand2:#14B8A6;--navy:#0A1633;--muted:#64748B;--line:#E2E8F0;--bg:#F4F7FA;--card:#fff;--ok:#0E9384;--warn:#B54708;--bad:#D92D20;--r:16px;--sh:0 1px 2px rgba(10,22,51,.05),0 8px 24px -12px rgba(10,22,51,.12)}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:"Segoe UI",Tahoma,"Noto Sans Arabic",system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--navy);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+.top{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.top .in{max-width:1180px;margin:0 auto;padding:10px 18px;display:flex;align-items:center;gap:12px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px;letter-spacing:-.3px}
+.logo img{width:36px;height:36px;border-radius:10px}
+.logo small{display:block;font-weight:600;font-size:12px;color:var(--muted);margin-top:-4px}
+.sp{flex:1}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:12px;padding:10px 18px;font:inherit;font-weight:700;cursor:pointer;white-space:nowrap}
+.btn.p{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff}
+.btn.g{background:#fff;color:var(--navy);box-shadow:inset 0 0 0 1.5px var(--line)}
+.btn.s{padding:7px 12px;font-size:13px}
+main{max-width:1180px;margin:0 auto;padding:22px 18px 60px}
+.hello{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:18px}
+.hello h1{margin:0;font-size:26px;letter-spacing:-.4px}
+.hello p{margin:2px 0 0;color:var(--muted)}
+.grid{display:grid;gap:14px}
+.kpis{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+.card{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);padding:18px}
+.kpi .l{color:var(--muted);font-size:13px;font-weight:600}
+.kpi .v{font-size:21px;font-weight:800;margin:4px 0 0;letter-spacing:-.5px;direction:ltr;unicode-bidi:plaintext}
+.kpi .c{font-size:12.5px;color:var(--muted)}
+.kpi.main{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff}
+.kpi.main .l,.kpi.main .c{color:rgba(255,255,255,.88)}
+h2{margin:0 0 12px;font-size:16.5px}
+.two{grid-template-columns:2fr 1fr;margin-top:14px;align-items:start}
+.three{grid-template-columns:repeat(auto-fit,minmax(300px,1fr));margin-top:14px}
+@media(max-width:860px){.two{grid-template-columns:1fr}}
+.acts{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.act{display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 8px;border-radius:14px;background:var(--bg);font-weight:700;font-size:13.5px;text-align:center;border:1.5px solid transparent;transition:.15s}
+.act:hover{border-color:var(--brand);background:#fff}
+.act i{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:#fff;box-shadow:var(--sh);font-style:normal;font-size:20px}
+.act.pos{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff}
+.act.pos i{background:rgba(255,255,255,.2);box-shadow:none}
+.chart{display:flex;align-items:flex-end;gap:6px;height:170px;padding-top:8px}
+.bar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:6px;height:100%;min-width:0}
+.bar b{display:block;width:100%;border-radius:8px 8px 3px 3px;background:linear-gradient(180deg,var(--brand),var(--brand2));min-height:3px}
+.bar.z b{background:var(--line)}
+.bar span{font-size:11px;color:var(--muted);direction:ltr}
+.list{list-style:none;margin:0;padding:0}
+.list li{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.list li:last-child{border:0}
+.list .n{font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.list .s{color:var(--muted);font-size:12.5px}
+.num{direction:ltr;unicode-bidi:plaintext;font-weight:700;white-space:nowrap}
+.badge{display:inline-block;border-radius:99px;padding:2px 10px;font-size:12px;font-weight:700;background:#EEF2F6;color:#475467;white-space:nowrap}
+.badge.ok{background:#ECFDF3;color:var(--ok)}
+.badge.warn{background:#FFFAEB;color:var(--warn)}
+.badge.bad{background:#FEF3F2;color:var(--bad)}
+.empty{color:var(--muted);padding:14px 0;text-align:center}
+.skel{opacity:.5}
+.hide{display:none!important}
+.err{background:#FEF3F2;color:var(--bad);border-radius:12px;padding:12px 16px;margin-bottom:14px;font-weight:600}
+.foot{text-align:center;color:var(--muted);font-size:12.5px;margin-top:26px}
+</style>
+</head>
+<body>
+<header class="top"><div class="in">
+  <a class="logo" href="/amy"><img src="/assets/amy_pos/images/logo.svg" alt=""><span>AMY<small id="company"></small></span></a>
+  <span class="sp"></span>
+  <a class="btn g s hide" id="posTop" href="/pos"></a>
+  <a class="btn g s" id="deskTop" href="/app"></a>
+  <button class="btn g s" id="lang" type="button">EN</button>
+</div></header>
+<main>
+  <div id="err" class="err hide"></div>
+  <div class="hello"><div><h1 id="hi"></h1><p id="date"></p></div><a class="btn p hide" id="posBtn" href="/pos"></a></div>
+  <section class="grid kpis" id="kpis"></section>
+  <section class="grid two">
+    <div class="card"><h2 id="tChart"></h2><div class="chart" id="chart"></div></div>
+    <div class="card"><h2 id="tActs"></h2><div class="acts" id="acts"></div></div>
+  </section>
+  <section class="grid three">
+    <div class="card"><h2 id="tTop"></h2><ul class="list" id="top"></ul></div>
+    <div class="card"><h2 id="tLow"></h2><ul class="list" id="low"></ul></div>
+    <div class="card" id="zcard"><h2 id="tZ"></h2><ul class="list" id="zsum"></ul></div>
+  </section>
+  <section class="card" style="margin-top:14px"><h2 id="tRecent"></h2><ul class="list" id="recent"></ul></section>
+  <p class="foot">AMY by AMY Tech · amytech.net</p>
+</main>
+<script>
+(function(){
+var USER = "{{ user_fullname | e }}";
+var TXT = {
+ ar:{dir:"rtl",hi:"أهلاً، ",desk:"النظام الكامل",pos:"فتح الكاشير",today:"مبيعات اليوم",month:"مبيعات الشهر",purch:"مشتريات الشهر",recv:"مستحق من العملاء",pay:"مستحق للموردين",stock:"قيمة المخزون",inv:"فاتورة",
+  chart:"المبيعات آخر 14 يوم",acts:"إجراءات سريعة",top:"الأكثر مبيعًا هذا الشهر",low:"مخزون يحتاج انتباه",z:"الفوترة الإلكترونية (ZATCA) هذا الشهر",recent:"آخر الفواتير",
+  none:"لا توجد بيانات بعد",noperm:"غير متاح لصلاحياتك",qty:"الكمية",out:"نفد",neg:"رصيد سالب",
+  a:{pos:"الكاشير",si:"فاتورة بيع",pi:"فاتورة مشتريات",se:"حركة مخزون",item:"صنف جديد",cust:"عميل جديد",supp:"مورد جديد",rs:"تقرير المخزون",rv:"تقرير المبيعات"},
+  zs:{"Accepted":"مقبولة","Accepted with warnings":"مقبولة بتحذيرات","Rejected":"مرفوضة","Ready For Batch":"بانتظار الإرسال","Resend":"إعادة إرسال","Corrected":"مصححة","Clearance switched off":"التصريح متوقف","Duplicate":"مكررة","Pending":"قيد الانتظار"},
+  err:"تعذّر تحميل البيانات. حدّث الصفحة أو سجّل الدخول من جديد.",locale:"ar"},
+ en:{dir:"ltr",hi:"Hello, ",desk:"Full system",pos:"Open POS",today:"Sales today",month:"Sales this month",purch:"Purchases this month",recv:"Owed by customers",pay:"Owed to suppliers",stock:"Stock value",inv:"invoices",
+  chart:"Sales, last 14 days",acts:"Quick actions",top:"Top sellers this month",low:"Stock needing attention",z:"E-invoicing (ZATCA) this month",recent:"Recent invoices",
+  none:"No data yet",noperm:"Not available for your role",qty:"Qty",out:"Out of stock",neg:"Negative stock",
+  a:{pos:"POS",si:"Sales invoice",pi:"Purchase invoice",se:"Stock entry",item:"New item",cust:"New customer",supp:"New supplier",rs:"Stock report",rv:"Sales report"},
+  zs:{"Accepted":"Accepted","Accepted with warnings":"With warnings","Rejected":"Rejected","Ready For Batch":"Queued","Resend":"Resend","Corrected":"Corrected","Clearance switched off":"Clearance off","Duplicate":"Duplicate","Pending":"Pending"},
+  err:"Could not load the data. Refresh the page or sign in again.",locale:"en-US"}
+};
+var L = "ar"; try{L = localStorage.getItem("amy_lang") || "ar"}catch(e){}
+if(!TXT[L]) L = "ar";
+var DATA = null;
+function $(id){return document.getElementById(id)}
+function el(tag, cls, text){var e=document.createElement(tag); if(cls) e.className=cls; if(text!=null) e.textContent=text; return e}
+function clear(n){while(n.firstChild) n.removeChild(n.firstChild)}
+function money(v){
+  v = Number(v||0);
+  return v.toLocaleString("en-US",{maximumFractionDigits:v>=1000?0:2});
+}
+function cur(){return (DATA&&DATA.currency)||""}
+function badgeClass(s){
+  if(s==="Accepted") return "ok";
+  if(s==="Accepted with warnings"||s==="Resend"||s==="Ready For Batch"||s==="Pending") return "warn";
+  if(s==="Rejected"||s==="Duplicate") return "bad";
+  return "";
+}
+
+function kpi(label, value, sub, main){
+  var c = el("div","card kpi"+(main?" main":""));
+  c.appendChild(el("div","l",label));
+  c.appendChild(el("div","v", value==null?"-":money(value)+" "+cur()));
+  c.appendChild(el("div","c", sub||" "));
+  return c;
+}
+
+function render(){
+  var t = TXT[L], d = DATA;
+  document.documentElement.lang = L; document.documentElement.dir = t.dir;
+  $("lang").textContent = L==="ar" ? "EN" : "عربي";
+  $("deskTop").textContent = t.desk;
+  $("hi").textContent = t.hi + (USER||"");
+  try{ $("date").textContent = new Date().toLocaleDateString(t.locale,{weekday:"long",year:"numeric",month:"long",day:"numeric"}) }catch(e){}
+  $("tChart").textContent=t.chart; $("tActs").textContent=t.acts; $("tTop").textContent=t.top; $("tLow").textContent=t.low; $("tZ").textContent=t.z; $("tRecent").textContent=t.recent;
+  if(!d){return}
+  $("company").textContent = d.company||"";
+  var pos = d.apps && d.apps.pos_next;
+  ["posTop","posBtn"].forEach(function(i){var a=$(i); a.textContent=t.pos; a.classList.toggle("hide",!pos)});
+
+  var k = $("kpis"); clear(k);
+  var s = d.sales, p = d.purchases;
+  k.appendChild(kpi(t.today, s&&s.today.value, s? s.today.count+" "+t.inv : t.noperm, true));
+  k.appendChild(kpi(t.month, s&&s.month.value, s? s.month.count+" "+t.inv : t.noperm));
+  k.appendChild(kpi(t.purch, p&&p.month.value, p? p.month.count+" "+t.inv : t.noperm));
+  k.appendChild(kpi(t.recv, s&&s.receivable.value, s? s.receivable.count+" "+t.inv : t.noperm));
+  k.appendChild(kpi(t.pay, p&&p.payable.value, p? p.payable.count+" "+t.inv : t.noperm));
+  k.appendChild(kpi(t.stock, d.stock_value, " "));
+
+  var ch = $("chart"); clear(ch);
+  if(d.series){
+    var max = Math.max.apply(null, d.series.map(function(x){return x.total}).concat([1]));
+    d.series.forEach(function(x,i){
+      var b = el("div","bar"+(x.total? "":" z")), bar = el("b");
+      bar.style.height = Math.max(2, Math.round(x.total/max*130))+"px";
+      b.title = x.date+": "+money(x.total)+" "+cur();
+      b.appendChild(bar);
+      b.appendChild(el("span","", (i===0||i===d.series.length-1||i%4===0)? x.date.slice(5) : " "));
+      ch.appendChild(b);
+    });
+  } else ch.appendChild(el("div","empty",t.noperm));
+
+  var acts = $("acts"); clear(acts);
+  var A = [];
+  if(pos) A.push(["pos","/pos","🛒",t.a.pos]);
+  A.push(["","/app/sales-invoice/new","🧾",t.a.si],["","/app/purchase-invoice/new","📥",t.a.pi],["","/app/stock-entry/new","📦",t.a.se],
+    ["","/app/item/new","➕",t.a.item],["","/app/customer/new","👤",t.a.cust],["","/app/supplier/new","🚚",t.a.supp],
+    ["","/app/query-report/Stock%20Balance","📊",t.a.rs],["","/app/query-report/Sales%20Register","📈",t.a.rv]);
+  A.forEach(function(a){var n=el("a","act "+a[0]); n.href=a[1]; n.appendChild(el("i","",a[2])); n.appendChild(el("span","",a[3])); acts.appendChild(n)});
+
+  fill($("top"), d.top_items, function(r){
+    var li=el("li"), l=el("div"); l.appendChild(el("div","n",r.item_name||r.item_code)); l.appendChild(el("div","s",t.qty+": "+money(r.qty)));
+    li.appendChild(l); li.appendChild(el("span","num",money(r.amount)+" "+cur())); return li});
+  fill($("low"), d.low_stock, function(r){
+    var li=el("li"), l=el("div"); l.appendChild(el("div","n",r.item_name||r.item_code)); l.appendChild(el("div","s",r.warehouse));
+    var q=Number(r.actual_qty), b=el("span","badge "+(q<0?"bad":"warn"), q<0? t.neg+" "+money(q) : (q===0? t.out : money(q)));
+    li.appendChild(l); li.appendChild(b); return li});
+
+  var zc=$("zcard"), zs=$("zsum"); clear(zs);
+  if(d.zatca==null){zc.classList.add("hide")} else {
+    zc.classList.remove("hide");
+    var keys=Object.keys(d.zatca);
+    if(!keys.length) zs.appendChild(el("li","empty",t.none));
+    keys.forEach(function(key){var li=el("li"); li.appendChild(el("span","badge "+badgeClass(key), t.zs[key]||key)); li.appendChild(el("span","num",String(d.zatca[key]))); zs.appendChild(li)});
+  }
+
+  fill($("recent"), d.recent, function(r){
+    var li=el("li"), l=el("div"); l.appendChild(el("div","n",(r.customer_name||"")+" · "+r.name)); l.appendChild(el("div","s",r.posting_date));
+    var right=el("div"); right.style.textAlign="end";
+    right.appendChild(el("div","num",money(r.base_grand_total)+" "+cur()));
+    if(r.zatca) right.appendChild(el("span","badge "+badgeClass(r.zatca), t.zs[r.zatca]||r.zatca));
+    li.appendChild(l); li.appendChild(right);
+    li.style.cursor="pointer"; li.addEventListener("click",function(){location.href="/app/sales-invoice/"+encodeURIComponent(r.name)}); return li});
+}
+
+function fill(ul, rows, row){
+  clear(ul);
+  if(rows==null){ul.appendChild(el("li","empty",TXT[L].noperm));return}
+  if(!rows.length){ul.appendChild(el("li","empty",TXT[L].none));return}
+  rows.forEach(function(r){ul.appendChild(row(r))});
+}
+
+$("lang").addEventListener("click",function(){L = L==="ar"?"en":"ar"; try{localStorage.setItem("amy_lang",L)}catch(e){} render()});
+render();
+fetch("/api/method/amy_pos.api.dashboard",{credentials:"same-origin",headers:{"Accept":"application/json"}})
+ .then(function(r){ if(r.status===401||r.status===403){location.href="/login?redirect-to=/amy"; throw 0} return r.json() })
+ .then(function(j){ if(!j||!j.message) throw new Error("bad"); DATA=j.message; render() })
+ .catch(function(e){ if(e===0) return; var b=$("err"); b.textContent=TXT[L].err; b.classList.remove("hide") });
+})();
+</script>
+</body>
+</html>

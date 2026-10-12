@@ -11,6 +11,17 @@ A focused ERPNext (Frappe v15) product by [AMY Tech](https://amytech.net):
 
 All other ERPNext modules are hidden per customer by the SaaS provisioner (industry `pos`).
 
+## AMY console (`/amy`)
+
+A new, simple home screen for small and medium businesses, served by the app itself:
+today's and month's sales, purchases, receivables/payables, stock value, 14-day sales chart,
+top sellers, low stock, ZATCA status, recent invoices and one-tap actions (POS Next, invoices, stock, reports).
+Arabic and English, mobile friendly. Data comes from `amy_pos.api.dashboard` (permission aware,
+every block hides itself if the user lacks access or an app is missing).
+
+Customers land on it after login when the site has `"amy_console": 1` in `site_config.json`
+(`scripts/install-site.sh` sets it; use `AMY_CONSOLE=0` to skip). Administrator keeps `/app`.
+
 ## Install on a bench (once)
 
 ```bash
