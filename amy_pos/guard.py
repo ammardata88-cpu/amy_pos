@@ -22,7 +22,8 @@ LIMITS = {
     "heavy": (30, 60),
 }
 LOGIN_PATHS = {"/api/method/login", "/login"}
-RESET_PATHS = {"/api/method/frappe.core.doctype.user.user.reset_password"}
+RESET_PATHS = {"/api/method/frappe.core.doctype.user.user.reset_password", "/api/method/amy_pos.auth.request_reset",
+               "/api/method/frappe.core.doctype.user.user.update_password"}
 WRITES = {
     "save_doc", "submit_doc", "cancel_doc", "delete_doc", "make_return", "make_payment",
     "make_from", "save_user", "quick_setup", "expense_save", "zatca_save", "zatca_step",
@@ -64,7 +65,7 @@ def before_request():
         return _hit("login", _ip())
     if req.method == "POST" and path in RESET_PATHS:
         return _hit("reset", _ip())
-    if path.startswith("/api/method/amy_pos."):
+    if path.startswith("/api/method/amy_pos.") and path not in RESET_PATHS:
         fn = path.rsplit(".", 1)[-1]
         who = frappe.session.user if frappe.session.user != "Guest" else _ip()
         if fn in HEAVY:

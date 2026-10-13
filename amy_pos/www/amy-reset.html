@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="referrer" content="same-origin">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; form-action 'self'; base-uri 'self'; object-src 'none'">
+<title>AMY</title>
+<link rel="icon" href="/assets/amy_pos/images/amy-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#111C26;--mut:#69757F;--line:#DDE2E7;--brand:#0B7CA4;--brand2:#1DA6D4;--bad:#B42318;--badb:#FCE9E7;--f:"IBM Plex Sans Arabic","Segoe UI",Tahoma,system-ui,sans-serif}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{font-family:var(--f);color:var(--ink);background:#fff;-webkit-font-smoothing:antialiased;line-height:1.6}
+.wrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);min-height:100vh}
+.panel{display:flex;flex-direction:column;padding:28px 56px}
+.top{display:flex;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:11px;font-weight:700;font-size:17px;letter-spacing:.16em}
+.brand img{width:38px;height:38px;border-radius:9px}
+.lang{border:1px solid #CDD4DB;background:#fff;border-radius:6px;padding:7px 14px;font:inherit;font-weight:600;cursor:pointer;color:var(--ink)}
+.lang:hover{border-color:var(--brand);color:var(--brand)}
+.mid{flex:1;display:flex;align-items:center}
+.box{width:100%;max-width:400px;margin:0 auto}
+h1{font-size:28px;line-height:1.25;margin:0 0 8px;font-weight:600}
+.sub{color:var(--mut);margin:0 0 28px}
+label{display:block;font-weight:600;font-size:15px;margin:0 0 6px}
+.f{margin-bottom:18px;position:relative}
+input{width:100%;height:44px;border:1px solid #CDD4DB;border-radius:6px;padding:0 14px;font:inherit;font-size:15px;color:var(--ink);background:#fff;transition:border .15s,box-shadow .15s}
+input:focus{outline:0;border-color:var(--brand2);box-shadow:0 0 0 3px rgba(29,166,212,.22)}
+.eye{position:absolute;inset-inline-end:6px;bottom:6px;border:0;background:none;color:var(--mut);cursor:pointer;height:36px;padding:0 10px;font:inherit;font-size:13px;font-weight:600}
+.btn{width:100%;height:46px;border:0;border-radius:6px;background:var(--brand);color:#fff;font:inherit;font-size:15px;font-weight:600;cursor:pointer;transition:background .1s}
+.btn:hover{background:#08627F}
+.btn[disabled]{opacity:.7;cursor:wait}
+.err{background:var(--badb);color:var(--bad);border-radius:10px;padding:10px 14px;font-size:15px;margin-bottom:16px;display:none}
+.ok{background:#E4F5EC;color:#0F7A55;border-radius:10px;padding:10px 14px;font-size:15px;margin-bottom:16px;display:none}
+.row{display:flex;justify-content:flex-end;margin:-6px 0 20px}
+.lnk{text-decoration:none;background:none;border:0;color:var(--brand);font:inherit;font-weight:600;cursor:pointer;padding:0;font-size:15px}
+.foot{color:#98A2B3;font-size:13px}
+.hero{background:#0F1E2A;color:#fff;display:flex;flex-direction:column;justify-content:center;padding:56px 64px}
+.hero h2{font-size:36px;line-height:1.35;margin:0 0 12px;font-weight:600;max-width:460px}
+.hero p{color:#9DB0BF;max-width:440px;margin:0 0 40px;font-size:15px}
+.led{max-width:460px;border-top:2px solid #fff;direction:ltr}
+.led div{display:flex;justify-content:space-between;gap:16px;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.14);font-size:15px;color:#C5D2DC;font-variant-numeric:tabular-nums}
+.led div b{font-weight:500;color:#fff}
+.led div.t{border-bottom:0;font-size:17px;color:#fff}
+.led div.t b{font-weight:600}
+@media(max-width:900px){.wrap{grid-template-columns:1fr}.hero{display:none}.panel{padding:22px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+ <section class="panel">
+  <div class="top"><div class="brand"><img src="/assets/amy_pos/images/amy-logo.png" alt=""><span>AMY</span></div><button class="lang" id="lang" type="button">EN</button></div>
+  <div class="mid"><form class="box" id="f" autocomplete="off">
+   <h1 id="t1"></h1><p class="sub" id="t2"></p>
+   <div class="err" id="err" role="alert"></div>
+   <div class="f"><label for="p" id="lp"></label><input id="p" type="password" autocomplete="new-password" minlength="8" required><button class="eye" id="eye" type="button"></button></div>
+   <div class="f"><label for="p2" id="lp2"></label><input id="p2" type="password" autocomplete="new-password" required></div>
+   <button class="btn" id="go" type="submit"></button>
+   <div class="row" style="margin:16px 0 0;justify-content:center"><a class="lnk" id="back" href="/amy-login"></a></div>
+  </form></div>
+  <div class="foot">AMY by AMY Tech</div>
+ </section>
+ <aside class="hero">
+  <h2 id="h2"></h2><p id="hp"></p>
+  <div class="led" aria-hidden="true"><div><span>INV-00127 · Al Noor Trading</span><b>1,150.00</b></div><div><span>INV-00128 · Walk-in</span><b>172.50</b></div><div><span>PUR-00041 · Gulf Supply</span><b>-3,100.00</b></div><div class="t"><span>Net</span><b>SAR -1,777.50</b></div></div>
+ </aside>
+</div>
+<script>
+(function(){
+"use strict";
+var T = {
+ ar:{t1:"كلمة مرور جديدة",t2:"اختر كلمة مرور قوية لا تقل عن 8 أحرف.",lp:"كلمة المرور الجديدة",lp2:"أعد كتابتها",go:"حفظ والدخول",show:"إظهار",hide:"إخفاء",back:"العودة لتسجيل الدخول",
+  mism:"كلمتا المرور غير متطابقتين.",short:"كلمة المرور قصيرة، استخدم 8 أحرف على الأقل.",bad:"الرابط منتهي أو غير صحيح. اطلب رابطاً جديداً من صفحة الدخول.",net:"تعذّر الاتصال. جرّب مرة أخرى.",
+  h2:"كل شركتك في مكان واحد.",hp:"مبيعات ومشتريات ومخزون ومحاسبة وفوترة إلكترونية، بواجهة واحدة."},
+ en:{t1:"Choose a new password",t2:"Use a strong password of at least 8 characters.",lp:"New password",lp2:"Repeat it",go:"Save and sign in",show:"Show",hide:"Hide",back:"Back to sign in",
+  mism:"The two passwords do not match.",short:"Password is too short. Use at least 8 characters.",bad:"This link is expired or invalid. Request a new one from the sign-in page.",net:"Could not connect. Try again.",
+  h2:"Your whole business in one place.",hp:"Sales, purchasing, stock, accounting and e-invoicing in one interface."}
+};
+var lang="ar"; try{ lang = localStorage.getItem("amy_lang") || "ar" }catch(e){}
+var $ = function(i){ return document.getElementById(i) };
+var key = new URLSearchParams(location.search).get("key") || "";
+function paint(){
+  var s = T[lang]; document.documentElement.lang = lang; document.documentElement.dir = lang==="ar"?"rtl":"ltr";
+  ["t1","t2","lp","lp2","go","back","h2","hp"].forEach(function(k){ $(k).textContent = s[k] });
+  $("lang").textContent = lang==="ar"?"EN":"عربي"; $("eye").textContent = $("p").type==="password"? s.show : s.hide;
+  document.title = "AMY - " + s.t1;
+}
+function msg(t){ var e=$("err"); e.textContent=t||""; e.style.display=t?"block":"none" }
+$("lang").onclick=function(){ lang = lang==="ar"?"en":"ar"; try{ localStorage.setItem("amy_lang",lang) }catch(e){} paint() };
+$("eye").onclick=function(){ var t = $("p").type==="password"?"text":"password"; $("p").type=t; $("p2").type=t; paint() };
+$("f").onsubmit=function(ev){
+  ev.preventDefault(); msg();
+  var s=T[lang], p=$("p").value;
+  if(!key){ msg(s.bad); return }
+  if(p.length<8){ msg(s.short); return }
+  if(p!==$("p2").value){ msg(s.mism); return }
+  var b=$("go"); b.disabled=true;
+  var body = new URLSearchParams(); body.set("new_password",p); body.set("key",key);
+  fetch("/api/method/frappe.core.doctype.user.user.update_password",{method:"POST",credentials:"same-origin",headers:{"Accept":"application/json","Content-Type":"application/x-www-form-urlencoded"},body:body.toString()})
+  .then(function(r){ return r.json().catch(function(){ return {} }).then(function(j){ return {ok:r.ok,j:j} }) })
+  .then(function(x){
+    if(x.ok){ location.href = "/amy"; return }
+    b.disabled=false;
+    var m = ""; try{ m = JSON.parse(JSON.parse(x.j._server_messages)[0]).message.replace(/<[^>]+>/g,"") }catch(e){}
+    msg(m || s.bad);
+  }).catch(function(){ b.disabled=false; msg(s.net) });
+};
+paint();
+})();
+</script>
+</body>
+</html>

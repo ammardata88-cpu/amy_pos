@@ -67,6 +67,28 @@ AMY.dispatch = function(p, root){
 /* ---------- top bar ---------- */
 function closeMenus(){ ["newMenu","uMenu"].forEach(function(i){ $(i).classList.remove("open") }) }
 function toggle(id, e){ e.stopPropagation(); var o = $(id).classList.contains("open"); closeMenus(); if(!o) $(id).classList.add("open") }
+function changePassword(){
+  var ar = AMY.lang==="ar", d = {o:"", n:"", c:""};
+  function inp(k){ var i = h("input",{class:"in",type:"password",autocomplete:k==="o"?"current-password":"new-password",dir:"ltr"}); i.addEventListener("input",function(){ d[k]=i.value }); return i }
+  function fl(label, el){ return h("div",{class:"field"}, h("label",{text:label}), el) }
+  AMY.drawer(ar?"تغيير كلمة المرور":"Change password", function(dw){
+    dw.body.appendChild(fl(ar?"كلمة المرور الحالية":"Current password", inp("o")));
+    dw.body.appendChild(fl(ar?"كلمة المرور الجديدة":"New password", inp("n")));
+    dw.body.appendChild(fl(ar?"أعد كتابة الجديدة":"Repeat the new one", inp("c")));
+    dw.body.appendChild(h("div",{class:"mut",style:"font-size:var(--t-sm)",text:ar?"8 أحرف على الأقل، ولا تستخدم كلمة سهلة التخمين.":"At least 8 characters. Avoid anything easy to guess."}));
+    dw.footer.appendChild(h("div",{style:"display:contents"},
+      h("button",{class:"btn g",type:"button",onclick:dw.close,text:t("close")}),
+      h("button",{class:"btn p",type:"button",text:t("save"),onclick:function(ev){
+        if(!d.o) return AMY.toast(ar?"اكتب كلمة المرور الحالية.":"Enter your current password.","bad");
+        if(d.n.length<8) return AMY.toast(ar?"كلمة المرور الجديدة قصيرة.":"The new password is too short.","bad");
+        if(d.n!==d.c) return AMY.toast(ar?"كلمتا المرور غير متطابقتين.":"The passwords do not match.","bad");
+        var b = ev.currentTarget; b.disabled = true;
+        AMY.call("frappe.core.doctype.user.user.update_password",{new_password:d.n,old_password:d.o}).then(function(){
+          AMY.toast(ar?"تم تغيير كلمة المرور.":"Password changed.","ok"); dw.close();
+        }).catch(function(e){ b.disabled = false; AMY.fail(e) });
+      }})));
+  });
+}
 function chrome(){
   var T = AMY.lang==="ar"; var b = AMY.boot;
   document.documentElement.lang = AMY.lang; document.documentElement.dir = T? "rtl" : "ltr";
@@ -84,7 +106,9 @@ function chrome(){
   var up = $("uPop"); AMY.clear(up);
   up.appendChild(h("div",{class:"who"}, h("b",{text:b.user.full_name}), h("span",{text:b.user.name})));
   up.appendChild(h("hr"));
-  up.appendChild(h("button",{type:"button",onclick:function(){ location.href="/app" }}, AMY.icon("grid"), t("desk")));
+  up.appendChild(h("button",{type:"button",onclick:function(){ closeMenus(); changePassword() }}, AMY.icon("lock"), AMY.lang==="ar"?"تغيير كلمة المرور":"Change password"));
+  if(b.is_admin)
+    up.appendChild(h("button",{type:"button",onclick:function(){ location.href="/app" }}, AMY.icon("grid"), t("desk")));
   up.appendChild(h("button",{type:"button",onclick:function(){
     AMY.call("logout",{}).then(function(){ location.href="/amy-login" },function(){ location.href="/amy-login" }) }}, AMY.icon("out"), t("signout")));
   $("uBtn").textContent = (b.user.full_name||"?").trim().charAt(0).toUpperCase();
