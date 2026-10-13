@@ -4,7 +4,7 @@
 var AMY = window.AMY, h = AMY.h, V = AMY.views;
 function L(a, e){ return AMY.lang === "ar" ? a : e }
 function call(fn, args){ return AMY.call("amy_pos.ops." + fn, args) }
-function fld(label, el, hint){ return h("div", {class: "field"}, h("label", {text: label}), el, hint ? h("div", {class: "mut", style: "font-size:12.5px;margin-top:4px", text: hint}) : null) }
+function fld(label, el, hint){ return h("div", {class: "field"}, h("label", {text: label}), el, hint ? h("div", {class: "mut", style: "font-size:var(--t-sm);margin-top:4px", text: hint}) : null) }
 function busy(btn, p){
   btn.disabled = true;
   return p.then(function(r){ btn.disabled = false; return r }, function(e){ btn.disabled = false; throw e });
@@ -153,7 +153,7 @@ V.einvoice = function(root){
     box.appendChild(h("div", {class: "hd", style: "margin-top:36px"}, h("h2", {text: L("خطوات الربط", "Connection steps")})));
     stepCard(STEPS.cli[0], STEPS.cli[1], ok.cli, function(b){
       b.appendChild(h("div", {style: "display:flex;gap:10px;flex-wrap:wrap"}, runBtn(L("تثبيت الأدوات", "Install tools"), "cli_setup"), runBtn(L("فحص الأدوات", "Check tools"), "cli_check", null, "g")));
-      b.appendChild(h("div", {class: "mut", style: "margin-top:8px;font-size:12.5px", text: L("قد يستغرق التثبيت دقيقة أو أكثر.", "Installation can take a minute or more.")}));
+      b.appendChild(h("div", {class: "mut", style: "margin-top:8px;font-size:var(--t-sm)", text: L("قد يستغرق التثبيت دقيقة أو أكثر.", "Installation can take a minute or more.")}));
     });
     var otp1 = ""; stepCard(STEPS.onboard[0], STEPS.onboard[1], ok.onboard, function(b){
       b.appendChild(fld(L("رمز OTP", "OTP"), txt("text", "", function(v){ otp1 = v }, true), L("يُولَّد من بوابة فاتورة (fatoora.zatca.gov.sa) ويصلح لفترة قصيرة.", "Generated on the Fatoora portal and valid for a short time.")));

@@ -4,7 +4,7 @@
 var AMY = window.AMY, h = AMY.h, V = AMY.views;
 function L(a, e){ return AMY.lang === "ar" ? a : e }
 function call(fn, args){ return AMY.call("amy_pos.books." + fn, args) }
-function fld(label, el, hint){ return h("div", {class: "field"}, h("label", {text: label}), el, hint ? h("div", {class: "mut", style: "font-size:12.5px;margin-top:4px", text: hint}) : null) }
+function fld(label, el, hint){ return h("div", {class: "field"}, h("label", {text: label}), el, hint ? h("div", {class: "mut", style: "font-size:var(--t-sm);margin-top:4px", text: hint}) : null) }
 function busy(btn, p){ btn.disabled = true; return p.then(function(r){ btn.disabled = false; return r }, function(e){ btn.disabled = false; throw e }) }
 function can(dt, p){ var x = AMY.boot.perms[dt]; return !!(x && x[p || "read"]) }
 function txt(type, value, onch, ltr){
@@ -337,7 +337,7 @@ V.vat = function(root){
         ? L("الإقرار يطابق دفتر الأستاذ لحسابات الضريبة.", "The return matches the ledger's tax accounts.")
         : L("فرق ", "Difference ") + money(diff) + L(" بين الإقرار وحسابات الضريبة في دفتر الأستاذ، راجع القيود اليدوية على حسابات الضريبة.", " between the return and the ledger's tax accounts. Check manual entries on tax accounts.")})));
     }
-    out.appendChild(h("p", {class: "mut noprint", style: "margin-top:14px;font-size:12.5px", text: L("اضغط على أي بند لعرض الفواتير التي كوّنته. التصنيف يُحدد من أنواع الضريبة في الإعدادات.", "Select a row to see the invoices behind it. Classification comes from the tax types in Settings.")}));
+    out.appendChild(h("p", {class: "mut noprint", style: "margin-top:14px;font-size:var(--t-sm)", text: L("اضغط على أي بند لعرض الفواتير التي كوّنته. التصنيف يُحدد من أنواع الضريبة في الإعدادات.", "Select a row to see the invoices behind it. Classification comes from the tax types in Settings.")}));
   }
   function drill(name, b){
     AMY.drawer(name, function(dw){
