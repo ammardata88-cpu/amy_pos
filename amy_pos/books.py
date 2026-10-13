@@ -41,7 +41,9 @@ def ensure_custom_fields():
         {"fieldname": "amy_activity", "label": "Activity", "fieldtype": "Data", "insert_after": "website"},
         {"fieldname": "amy_address", "label": "Address", "fieldtype": "Small Text", "insert_after": "amy_activity"},
     ]
-    create_custom_fields({TEMPLATE["sales"]: f, TEMPLATE["purchase"]: f, "Company": co}, ignore_validate=True)
+    create_custom_fields({TEMPLATE["sales"]: f, TEMPLATE["purchase"]: f, "Company": co,
+                          "User": [{"fieldname": "amy_account", "label": "AMY console account", "fieldtype": "Check", "insert_after": "enabled", "read_only": 1, "default": "0"}]},
+                         ignore_validate=True)
 
 
 # ================================================================ chart of accounts

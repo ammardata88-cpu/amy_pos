@@ -720,20 +720,9 @@ def _infer_role(roles):
 
 @frappe.whitelist()
 def list_users():
+    """Console accounts (not ERPNext users)."""
     frappe.only_for("System Manager")
-    users = frappe.get_all(
-        "User",
-        filters={"user_type": "System User", "name": ["not in", accounts.hidden_users()]},
-        fields=["name", "full_name", "first_name", "last_name", "enabled", "mobile_no", "language",
-                "last_login", "creation"],
-        order_by="creation asc", limit_page_length=500,
-    )
-    for u in users:
-        roles = [r.role for r in frappe.get_all("Has Role", filters={"parent": u.name, "parenttype": "User"},
-                                                   fields=["role"])]
-        u["amy_role"] = _infer_role(roles)
-        u["pos_profile"] = frappe.db.get_value("POS Profile User", {"user": u.name, "parenttype": "POS Profile"}, "parent")
-    return users
+    return accounts.list_accounts()
 
 
 def _assign_profile(user, profile):
@@ -763,57 +752,7 @@ def pos_profiles():
 @frappe.whitelist()
 def save_user(data):
     frappe.only_for("System Manager")
-    d = _json(data, {})
-    email = (d.get("email") or "").strip().lower()
-    if not email:
-        frappe.throw(_("Email is required"))
-    if email not in ("administrator",) and not frappe.utils.validate_email_address(email):
-        frappe.throw(_("Enter a valid email address"))
-    if email.lower() in [x.lower() for x in accounts.hidden_users()]:
-        frappe.throw(_("Not permitted"), frappe.PermissionError)
-    key = d.get("amy_role") or "sales"
-    if key not in ROLE_SETS:
-        frappe.throw(_("Invalid role"))
-    if email == frappe.session.user and key != "admin":
-        frappe.throw(_("You cannot remove your own admin access"))
-    roles = _role_set(key) if key in ROLE_SETS else None
-    managed = {r for k in ROLE_SETS for r in _role_set(k)}
-
-    if frappe.db.exists("User", email):
-        doc = frappe.get_doc("User", email)
-        if email in ("Administrator", "Guest") or doc.user_type != "System User":
-            frappe.throw(_("Not permitted"), frappe.PermissionError)
-        if email == frappe.session.user and not cint(d.get("enabled", 1)):
-            frappe.throw(_("You cannot disable your own account"))
-    else:
-        from amy_pos import plan
-
-        plan.check_user_limit()
-        doc = frappe.new_doc("User")
-        doc.email = email
-        doc.send_welcome_email = 0
-        doc.user_type = "System User"
-        if not d.get("password"):
-            frappe.throw(_("Password is required"))
-    for f in ("first_name", "last_name", "mobile_no", "language"):
-        if f in d:
-            doc.set(f, d.get(f) or None)
-    if not doc.first_name:
-        doc.first_name = email.split("@")[0]
-    doc.enabled = cint(d.get("enabled", 1))
-    if d.get("password"):
-        doc.new_password = d["password"]
-    if roles is not None:
-        keep = [r for r in doc.get("roles") if r.role not in managed]
-        doc.set("roles", keep)
-        have = {r.role for r in keep}
-        for r in roles:
-            if r not in have:
-                doc.append("roles", {"role": r})
-    doc.save()
-    if key == "cashier":
-        _assign_profile(doc.name, d.get("pos_profile"))
-    return {"name": doc.name}
+    return accounts.save_account(_json(data, {}), frappe.session.user)
 
 
 CONVERT = {

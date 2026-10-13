@@ -99,7 +99,7 @@ $("f").onsubmit=function(ev){
   if(p!==$("p2").value){ msg(s.mism); return }
   var b=$("go"); b.disabled=true;
   var body = new URLSearchParams(); body.set("new_password",p); body.set("key",key);
-  fetch("/api/method/frappe.core.doctype.user.user.update_password",{method:"POST",credentials:"same-origin",headers:{"Accept":"application/json","Content-Type":"application/x-www-form-urlencoded"},body:body.toString()})
+  fetch("/api/method/amy_pos.auth.reset_password",{method:"POST",credentials:"same-origin",headers:{"Accept":"application/json","Content-Type":"application/x-www-form-urlencoded"},body:body.toString()})
   .then(function(r){ return r.json().catch(function(){ return {} }).then(function(j){ return {ok:r.ok,j:j} }) })
   .then(function(x){
     if(x.ok){ location.href = "/amy"; return }

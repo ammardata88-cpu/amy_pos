@@ -98,7 +98,7 @@ $("f").onsubmit=function(ev){
   ev.preventDefault(); msg("err"); msg("ok");
   var b=$("go"); b.disabled=true;
   var body = new URLSearchParams(); body.set("usr",$("u").value.trim()); body.set("pwd",$("p").value);
-  fetch("/api/method/login",{method:"POST",credentials:"same-origin",headers:{"Accept":"application/json","Content-Type":"application/x-www-form-urlencoded"},body:body.toString()})
+  fetch("/api/method/amy_pos.auth.login",{method:"POST",credentials:"same-origin",headers:{"Accept":"application/json","Content-Type":"application/x-www-form-urlencoded"},body:body.toString()})
   .then(function(r){ return r.json().catch(function(){ return {} }).then(function(j){ return {ok:r.ok,j:j} }) })
   .then(function(x){
     if(x.ok){ var n = new URLSearchParams(location.search).get("next"); location.href = (n && /^\/(?![\/\\])/.test(n))? n : "/amy"; return }

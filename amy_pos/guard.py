@@ -21,8 +21,8 @@ LIMITS = {
     "write": (120, 60),
     "heavy": (30, 60),
 }
-LOGIN_PATHS = {"/api/method/login", "/login"}
-RESET_PATHS = {"/api/method/frappe.core.doctype.user.user.reset_password", "/api/method/amy_pos.auth.request_reset",
+LOGIN_PATHS = {"/api/method/login", "/login", "/api/method/amy_pos.auth.login"}
+RESET_PATHS = {"/api/method/frappe.core.doctype.user.user.reset_password", "/api/method/amy_pos.auth.request_reset", "/api/method/amy_pos.auth.reset_password",
                "/api/method/frappe.core.doctype.user.user.update_password"}
 WRITES = {
     "save_doc", "submit_doc", "cancel_doc", "delete_doc", "make_return", "make_payment",
@@ -56,6 +56,22 @@ def _ip():
     return getattr(frappe.local, "request_ip", None) or "0"
 
 
+CONSOLE_OK = ("/api/method/amy_pos.", "/api/method/logout", "/api/method/upload_file", "/api/method/ping",
+              "/api/method/frappe.desk.search.search_link", "/api/method/frappe.desk.query_report.run")
+
+
+def _console_only(path):
+    """A console account only ever talks to AMY's own API (plus sign-out, uploads and link search). Its machine user
+    carries ERPNext roles for permission checks, but it can never use ERPNext's generic API or change ERPNext users."""
+    from amy_pos.setup import accounts
+
+    user = frappe.session.user
+    if accounts.is_owner(user) or not frappe.db.exists("AMY Account", user):
+        return
+    if not path.startswith(CONSOLE_OK):
+        frappe.throw("Not permitted", frappe.PermissionError)
+
+
 def before_request():
     req = getattr(frappe.local, "request", None)
     if not req or req.method not in ("POST", "GET"):
@@ -65,11 +81,13 @@ def before_request():
         # Frappe's website page cache would otherwise hand every user the same stored HTML (stale CSRF
         # token, unrendered template). These pages are per-user, so they are never cached.
         frappe.local.no_cache = True
+    if path.startswith("/api/") and frappe.session.user not in ("Guest", "Administrator"):
+        _console_only(path)
     if req.method == "POST" and path in LOGIN_PATHS:
         return _hit("login", _ip())
     if req.method == "POST" and path in RESET_PATHS:
         return _hit("reset", _ip())
-    if path.startswith("/api/method/amy_pos.") and path not in RESET_PATHS:
+    if path.startswith("/api/method/amy_pos.") and path not in RESET_PATHS and path not in LOGIN_PATHS:
         fn = path.rsplit(".", 1)[-1]
         who = frappe.session.user if frappe.session.user != "Guest" else _ip()
         if fn in HEAVY:

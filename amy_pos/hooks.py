@@ -38,11 +38,7 @@ boot_session = "amy_pos.setup.login.boot_session"
 # Throttle sign-in, password reset and the AMY API (see guard.py).
 before_request = ["amy_pos.guard.before_request"]
 
-# ERPNext's own sign-in and reset pages are hidden: customers only ever see AMY's.
-website_redirects = [
-    {"source": "/login", "target": "/amy-login"},
-    {"source": "/update-password", "target": "/amy-login"},
-]
+# ERPNext's own /login stays for ERPNext accounts (the provider). Console accounts sign in at /amy-login and cannot use /login.
 
 # Keep non-admin users out of the ERPNext desk (experience only; APIs stay permission-checked).
 app_include_js = ["/assets/amy_pos/js/amy-desk-guard.js"]

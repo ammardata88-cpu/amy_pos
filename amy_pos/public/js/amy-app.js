@@ -85,7 +85,7 @@ function changePassword(){
         if(d.n.length<8) return AMY.toast(ar?"كلمة المرور الجديدة قصيرة.":"The new password is too short.","bad");
         if(d.n!==d.c) return AMY.toast(ar?"كلمتا المرور غير متطابقتين.":"The passwords do not match.","bad");
         var b = ev.currentTarget; b.disabled = true;
-        AMY.call("frappe.core.doctype.user.user.update_password",{new_password:d.n,old_password:d.o}).then(function(){
+        AMY.call("amy_pos.auth.change_password",{new_password:d.n,old_password:d.o}).then(function(){
           AMY.toast(ar?"تم تغيير كلمة المرور.":"Password changed.","ok"); dw.close();
         }).catch(function(e){ b.disabled = false; AMY.fail(e) });
       }})));

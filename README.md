@@ -83,20 +83,35 @@ Set a customer's plan from the server (nothing locks when it expires; admins jus
 
 ## Accounts, cashiers and shifts
 
-Three kinds of account on every customer site:
+**ERPNext accounts and console accounts are two separate worlds.**
 
-1. **Provider owner (hidden).** Set once per site; it holds every role, never appears in the customer's user list, never counts toward the plan's user limit and cannot be edited by the customer. It is the only account (besides Administrator) that can open the ERPNext desk; everyone else is sent to `/amy`.
+| | ERPNext accounts | Console accounts (AMY Account) |
+|---|---|---|
+| Who | you, the provider | the customer admin and the customer's team |
+| Sign in at | `/login` (ERPNext) | `/amy-login` |
+| Stored in | ERPNext `User` | `AMY Account` DocType, own password |
+| Listed in | ERPNext user list | Settings > General > Users & roles |
+
+Behind each console account sits one machine-managed ERPNext user (same e-mail, flagged `amy_account`) that only carries roles
+for permission checks and the "who sold it" trail. Its ERPNext password is random and unknown, so a console account can never sign
+in to ERPNext, and an ERPNext user can never sign in at `/amy-login`. Console accounts may only call AMY's own API
+(`guard.py: CONSOLE_OK`), not ERPNext's generic API.
+
+1. **Provider owner (hidden).** An ERPNext account named in site config `amy_owner`; every role; never in the customer's list or quota.
 
        bench --site SITE set-config amy_owner owner@yourcompany.com
-       bench --site SITE migrate                       # creates it (or: execute amy_pos.setup.accounts.ensure_owner)
+       bench --site SITE migrate
        bench --site SITE set-password owner@yourcompany.com 'long-password'
 
-2. **Customer admin** = the e-mail the customer subscribed with:
+2. **Customer admin** = the e-mail the customer subscribed with (a console account):
 
        bench --site SITE execute amy_pos.setup.accounts.create_admin --kwargs '{"email":"customer@x.com","name":"Customer","password":"..."}'
 
-3. **Team**, created by the customer admin in Settings > General > Users & roles, up to the plan's `users` limit:
-   regular users (any role) and **cashiers**. A cashier is linked to one POS Profile and opens straight on the till (`/amy-pos`), never the console.
+3. **Team**, created by the customer admin up to the plan's `users` limit: regular users and **cashiers** (a cashier is tied to one POS Profile and opens straight on the till).
+
+Existing ERPNext users that were used as console users are converted once (their records are kept so invoices keep their owner):
+
+       bench --site SITE execute amy_pos.setup.accounts.migrate_users --kwargs '{"password":"TempPass123"}'
 
 **Shifts.** Nobody can sell at the till without an open shift. Opening asks for the cash in the drawer (pre-filled with what the last shift left);
 closing asks for the cash counted and the cash left in the drawer, shows shortage/surplus and the amount to deposit, and stores everything in

@@ -49,7 +49,8 @@ def summary():
 
 
 def users_used():
-    return frappe.db.count("User", {"enabled": 1, "user_type": "System User", "name": ["not in", accounts.hidden_users()]})
+    """Enabled console accounts (ERPNext users and the provider's hidden owner never count)."""
+    return frappe.db.count("AMY Account", {"enabled": 1}) if frappe.db.exists("DocType", "AMY Account") else 0
 
 
 def users_limit():
