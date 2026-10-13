@@ -27,7 +27,7 @@ RESET_PATHS = {"/api/method/frappe.core.doctype.user.user.reset_password", "/api
 WRITES = {
     "save_doc", "submit_doc", "cancel_doc", "delete_doc", "make_return", "make_payment",
     "make_from", "save_user", "quick_setup", "expense_save", "zatca_save", "zatca_step",
-    "coa_save", "coa_delete", "coa_import", "tax_type_save", "tax_type_delete", "industry_set",
+    "pos_ready", "coa_save", "coa_delete", "coa_import", "tax_type_save", "tax_type_delete", "industry_set",
 }
 HEAVY = {"dashboard", "run_report", "zatca_step", "quick_setup", "vat_return", "coa_tree", "coa_import"}
 

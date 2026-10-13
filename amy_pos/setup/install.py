@@ -42,6 +42,11 @@ def after_migrate():
         books.ensure_custom_fields()
     except Exception:
         frappe.log_error(title="AMY POS: VAT class field")
+    try:
+        from amy_pos.setup import defaults
+        defaults.ensure_pos()
+    except Exception:
+        frappe.log_error(title="AMY POS: ensure POS")
     frappe.db.commit()
 
 

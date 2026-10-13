@@ -225,13 +225,11 @@ def _fix_pos(company, c):
             payments.append({"mode_of_payment": m.name, "default": 0 if payments else 1})
     if not payments:
         return
-    users = {"Administrator"}
-    for role in ("POSNext Cashier", "POS User"):
-        if frappe.db.exists("Role", role):
-            users.update(frappe.get_all("Has Role", filters={"role": role, "parenttype": "User"}, pluck="parent"))
-    users = [u for u in users if frappe.db.get_value("User", u, "enabled")]
+    users = _pos_users()
+    abbr = frappe.db.get_value("Company", company, "abbr") or company
+    pname = "AMY POS" if not frappe.db.exists("POS Profile", "AMY POS") else f"AMY POS - {abbr}"
     frappe.get_doc({
-        "doctype": "POS Profile", "name": "AMY POS", "company": company, "customer": WALKIN, "warehouse": warehouse,
+        "doctype": "POS Profile", "name": pname, "company": company, "customer": WALKIN, "warehouse": warehouse,
         "currency": c.default_currency, "selling_price_list": price_list, "write_off_account": c.write_off_account,
         "write_off_cost_center": c.cost_center, "cost_center": c.cost_center,
         "taxes_and_charges": _first("Sales Taxes and Charges Template", {"company": company, "is_default": 1}) or
@@ -282,3 +280,75 @@ def apply(company=None):
     out = status(company)
     out["errors"] = errors
     return out
+
+
+# ---------------------------------------------------------------- cashier ready
+# A user can open the till only if some POS Profile lists them. These helpers make
+# that automatic so nobody has to touch POS Profile settings to start selling.
+POS_ROLES = ("POSNext Cashier", "POS User", "Sales User", "Sales Manager", "Sales Master Manager",
+             "Accounts Manager", "System Manager")
+
+
+def _is_pos_user(user):
+    if not user or user in ("Guest",):
+        return False
+    if user == "Administrator":
+        return True
+    if not frappe.db.get_value("User", user, ["enabled"]):
+        return False
+    if frappe.db.get_value("User", user, "user_type") != "System User":
+        return False
+    return bool(set(frappe.get_roles(user)) & set(POS_ROLES))
+
+
+def _pos_users():
+    users = {"Administrator"}
+    users.update(frappe.get_all("User", filters={"enabled": 1, "user_type": "System User"}, pluck="name"))
+    return [u for u in users if _is_pos_user(u)]
+
+
+def sync_pos_users(company=None, only=None):
+    """Add cashier-capable users to a POS Profile when no profile lists them yet."""
+    company = _company(company)
+    if not company:
+        return 0
+    profile = frappe.db.get_value("POS Profile", {"company": company, "disabled": 0}, "name", order_by="creation asc")
+    if not profile:
+        return 0
+    listed = set(frappe.get_all("POS Profile User", filters={"parenttype": "POS Profile"}, pluck="user"))
+    todo = [u for u in (only or _pos_users()) if u not in listed and _is_pos_user(u)]
+    if not todo:
+        return 0
+    doc = frappe.get_doc("POS Profile", profile)
+    have_default = any(r.default for r in doc.get("applicable_for_users"))
+    for u in todo:
+        doc.append("applicable_for_users", {"user": u, "default": 0 if have_default else 1})
+        have_default = True
+    doc.save(ignore_permissions=True)
+    return len(todo)
+
+
+def ensure_pos(company=None):
+    """Every company gets a ready POS Profile and every cashier-capable user is listed on one."""
+    companies = [company] if company else frappe.get_all("Company", pluck="name", order_by="creation asc")
+    made = 0
+    for co in companies:
+        try:
+            if not frappe.db.exists("POS Profile", {"company": co, "disabled": 0}):
+                apply(co)
+                made += 1 if frappe.db.exists("POS Profile", {"company": co, "disabled": 0}) else 0
+            sync_pos_users(co)
+            frappe.db.commit()
+        except Exception:
+            frappe.db.rollback()
+            frappe.log_error(title=f"AMY POS: ensure_pos {co}")
+    return made
+
+
+def on_user_update(doc, method=None):
+    """Hook: a new or edited user who can sell is listed on a POS Profile right away."""
+    try:
+        if _is_pos_user(doc.name):
+            sync_pos_users(only=[doc.name])
+    except Exception:
+        frappe.log_error(title="AMY POS: user sync")

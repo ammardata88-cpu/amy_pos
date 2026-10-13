@@ -46,3 +46,6 @@ website_redirects = [
 
 # Keep non-admin users out of the ERPNext desk (experience only; APIs stay permission-checked).
 app_include_js = ["/assets/amy_pos/js/amy-desk-guard.js"]
+
+# A user who can sell is listed on a POS Profile automatically, so the till opens with no setup.
+doc_events = {"User": {"on_update": "amy_pos.setup.defaults.on_user_update"}}

@@ -126,6 +126,16 @@ $("lang").addEventListener("click",function(){
   chrome(); AMY.render();
 });
 
+/* The till opens with no setup: make sure a POS Profile lists this user first. */
+document.addEventListener("click",function(e){
+  var a = e.target.closest && e.target.closest('a[href="/pos"]'); if(!a || e.metaKey || e.ctrlKey) return;
+  e.preventDefault();
+  AMY.call("amy_pos.ops.pos_ready",{}).then(function(r){
+    if(r && r.ok) location.href = "/pos";
+    else AMY.toast(AMY.lang==="ar"?"تعذّر تجهيز الكاشير. تأكد من وجود شركة ومستودع وطرق دفع، أو من الإعدادات > إعداد سريع.":"Could not prepare the till. Check the company, warehouse and payment methods, or run Settings > Quick setup.","bad");
+  }).catch(function(err){ if(err && err.silent) return; location.href = "/pos" });
+});
+
 /* ---------- start ---------- */
 AMY.rest("bootstrap",{}).then(function(b){
   AMY.boot = b; chrome(); AMY.render();

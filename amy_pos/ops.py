@@ -429,3 +429,20 @@ def industry_set(industry):
         ss.save()
     frappe.db.commit()
     return {"industry": industry, "changed": changed}
+
+
+@frappe.whitelist()
+def pos_ready():
+    """Called before the till opens: make sure a POS Profile exists and lists this user."""
+    from amy_pos.setup import defaults
+    user = frappe.session.user
+    try:
+        if "System Manager" in frappe.get_roles(user):
+            defaults.ensure_pos()
+        else:
+            defaults.sync_pos_users(only=[user])
+    except Exception:
+        frappe.db.rollback()
+        frappe.log_error(title="AMY POS: pos_ready")
+    listed = frappe.db.exists("POS Profile User", {"user": user, "parenttype": "POS Profile"})
+    return {"ok": bool(listed)}
