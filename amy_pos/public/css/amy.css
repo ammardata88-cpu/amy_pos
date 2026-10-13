@@ -9,7 +9,7 @@
   --t-xs:12px;--t-sm:13px;--t-base:15px;--t-md:17px;--t-lg:20px;--t-num:24px;--t-xl:28px;--t-kpi:36px;--t-hero:52px;
   --lh-body:1.7;--lh-head:1.3;--lh-num:1.15;
   --s1:4px;--s2:8px;--s3:12px;--s4:16px;--s5:24px;--s6:32px;--s7:48px;
-  --f:"IBM Plex Sans Arabic","Segoe UI",Tahoma,system-ui,sans-serif;
+  --f:"IBM Plex Sans","IBM Plex Sans Arabic","Segoe UI",Tahoma,system-ui,sans-serif;
   --sh1:none;--sh2:0 10px 30px -8px rgba(17,28,38,.18),0 1px 3px rgba(17,28,38,.08);
   --r1:6px;--r2:6px;--r3:8px;--r4:10px;
 }

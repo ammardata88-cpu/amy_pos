@@ -1,4 +1,4 @@
-:root{--ink:#111C26;--mut:#5B6773;--rule:#DDE2E7;--brand:#0B7CA4;--f:"IBM Plex Sans Arabic",system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif}
+:root{--ink:#111C26;--mut:#5B6773;--rule:#DDE2E7;--brand:#0B7CA4;--f:"IBM Plex Sans","IBM Plex Sans Arabic",system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif}
 *{box-sizing:border-box}
 body{margin:0;background:#EEF1F4;color:var(--ink);font-family:var(--f);font-size:13px;line-height:1.6;font-variant-numeric:tabular-nums}
 .num{direction:ltr;unicode-bidi:plaintext}
