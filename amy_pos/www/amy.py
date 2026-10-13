@@ -22,6 +22,11 @@ def get_context(context):
     if frappe.session.user == "Guest":
         frappe.local.flags.redirect_location = "/amy-login"
         raise frappe.Redirect
+    from amy_pos import rest
+
+    if rest._is_cashier(frappe.get_roles()):
+        frappe.local.flags.redirect_location = "/amy-pos"
+        raise frappe.Redirect
     context.no_cache = 1
     context.csrf_token = frappe.sessions.get_csrf_token()
     context.v = _version()

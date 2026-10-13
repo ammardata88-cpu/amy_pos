@@ -47,6 +47,12 @@ def after_migrate():
         defaults.ensure_pos()
     except Exception:
         frappe.log_error(title="AMY POS: ensure POS")
+    try:
+        from amy_pos.setup import accounts, shift_doctype
+        shift_doctype.ensure()
+        accounts.ensure_owner()
+    except Exception:
+        frappe.log_error(title="AMY POS: shift doctype / owner")
     frappe.db.commit()
 
 

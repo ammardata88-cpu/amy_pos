@@ -7,6 +7,8 @@ Optional: amy_support = {"whatsapp": "9665...", "email": "support@amytech.net"}.
 With no config the site shows an open plan with no expiry (nothing is ever locked).
 """
 import frappe
+
+from amy_pos.setup import accounts
 from frappe.utils import cint, date_diff, flt, getdate, nowdate
 
 FEATURES = [
@@ -47,7 +49,7 @@ def summary():
 
 
 def users_used():
-    return frappe.db.count("User", {"enabled": 1, "user_type": "System User", "name": ["not in", ["Administrator", "Guest"]]})
+    return frappe.db.count("User", {"enabled": 1, "user_type": "System User", "name": ["not in", accounts.hidden_users()]})
 
 
 def users_limit():

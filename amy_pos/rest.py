@@ -15,6 +15,8 @@ import frappe
 from frappe import _
 from frappe.utils import cint, flt, nowdate
 
+from amy_pos.setup import accounts
+
 # Only these doctypes can be reached through the generic endpoints.
 ALLOWED = {
     "Sales Invoice", "Purchase Invoice", "Payment Entry", "Journal Entry",
@@ -25,7 +27,7 @@ ALLOWED = {
     "Sales Taxes and Charges Template", "Purchase Taxes and Charges Template",
     "Pricing Rule", "POS Profile", "POS Opening Shift", "POS Closing Shift",
     "Sales Invoice Additional Fields", "Quotation", "Sales Order", "Purchase Order",
-    "Batch", "Product Bundle", "Payment Terms Template", "Item Tax Template",
+    "AMY Shift", "Batch", "Product Bundle", "Payment Terms Template", "Item Tax Template",
 }
 
 INVOICES = ("Sales Invoice", "Purchase Invoice")
@@ -123,6 +125,12 @@ def _flags(doc):
     return perms
 
 
+def _is_cashier(roles):
+    """Cashier accounts open straight into the till: they hold cashier roles but no manager roles."""
+    roles = set(roles)
+    return bool(roles & {"POSNext Cashier", "POS User"}) and not roles & {"System Manager", "Sales Manager", "Accounts User", "Accounts Manager", "Purchase User", "Stock Manager"}
+
+
 def _sub():
     try:
         from amy_pos import plan
@@ -156,6 +164,8 @@ def bootstrap():
             "language": user.language,
         },
         "is_admin": "System Manager" in roles,
+        "is_owner": accounts.is_owner(),
+        "cashier": _is_cashier(roles),
         "company": company,
         "currency": frappe.get_cached_value("Company", company, "default_currency") if company else None,
         "logo": frappe.get_cached_value("Company", company, "company_logo") if company else None,
@@ -713,7 +723,7 @@ def list_users():
     frappe.only_for("System Manager")
     users = frappe.get_all(
         "User",
-        filters={"user_type": "System User", "name": ["not in", ["Administrator", "Guest"]]},
+        filters={"user_type": "System User", "name": ["not in", accounts.hidden_users()]},
         fields=["name", "full_name", "first_name", "last_name", "enabled", "mobile_no", "language",
                 "last_login", "creation"],
         order_by="creation asc", limit_page_length=500,
@@ -722,7 +732,32 @@ def list_users():
         roles = [r.role for r in frappe.get_all("Has Role", filters={"parent": u.name, "parenttype": "User"},
                                                    fields=["role"])]
         u["amy_role"] = _infer_role(roles)
+        u["pos_profile"] = frappe.db.get_value("POS Profile User", {"user": u.name, "parenttype": "POS Profile"}, "parent")
     return users
+
+
+def _assign_profile(user, profile):
+    """A cashier belongs to exactly one POS Profile: the one chosen here (or the company's first one)."""
+    from amy_pos.setup import defaults
+
+    if not profile or not frappe.db.exists("POS Profile", profile):
+        profile = frappe.db.get_value("POS Profile", {"disabled": 0}, "name", order_by="creation asc")
+    if not profile:
+        return
+    for parent in frappe.get_all("POS Profile User", filters={"user": user, "parenttype": "POS Profile", "parent": ["!=", profile]}, pluck="parent"):
+        pd = frappe.get_doc("POS Profile", parent)
+        pd.set("applicable_for_users", [r for r in pd.get("applicable_for_users") if r.user != user])
+        pd.save(ignore_permissions=True)
+    pd = frappe.get_doc("POS Profile", profile)
+    if not any(r.user == user for r in pd.get("applicable_for_users")):
+        pd.append("applicable_for_users", {"user": user, "default": 1})
+        pd.save(ignore_permissions=True)
+
+
+@frappe.whitelist()
+def pos_profiles():
+    frappe.only_for("System Manager")
+    return frappe.get_all("POS Profile", filters={"disabled": 0}, pluck="name", order_by="creation asc")
 
 
 @frappe.whitelist()
@@ -734,6 +769,8 @@ def save_user(data):
         frappe.throw(_("Email is required"))
     if email not in ("administrator",) and not frappe.utils.validate_email_address(email):
         frappe.throw(_("Enter a valid email address"))
+    if email.lower() in [x.lower() for x in accounts.hidden_users()]:
+        frappe.throw(_("Not permitted"), frappe.PermissionError)
     key = d.get("amy_role") or "sales"
     if key not in ROLE_SETS:
         frappe.throw(_("Invalid role"))
@@ -774,6 +811,8 @@ def save_user(data):
             if r not in have:
                 doc.append("roles", {"role": r})
     doc.save()
+    if key == "cashier":
+        _assign_profile(doc.name, d.get("pos_profile"))
     return {"name": doc.name}
 
 

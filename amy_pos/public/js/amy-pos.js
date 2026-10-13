@@ -287,7 +287,9 @@ function build(){
     h("button", {class: "btn g", type: "button", onclick: showHeld, title: "F8"}, AMY.icon("clock"), h("span", {class: "lbl", text: L("المعلّقة", "Held")}), heldN),
     h("button", {class: "btn g", type: "button", onclick: showRecent}, AMY.icon("list"), h("span", {class: "lbl", text: L("اليوم", "Today")})),
     h("button", {class: "btn g", type: "button", id: "lang", text: ar ? "EN" : "عربي", onclick: function(){ try{ localStorage.setItem("amy_lang", ar ? "en" : "ar") }catch(e){} location.reload() }}),
-    h("a", {class: "btn g", href: "/amy"}, AMY.icon("grid"), h("span", {class: "lbl", text: L("الكونسول", "Console")}))));
+    h("button", {class: "btn g", type: "button", id: "shiftb", onclick: showShift}, AMY.icon("lock"), h("span", {class: "lbl", text: L("الوردية", "Shift")})),
+    b.cashier ? h("button", {class: "btn g", type: "button", onclick: signOut}, AMY.icon("out"), h("span", {class: "lbl", text: L("خروج", "Sign out")}))
+      : h("a", {class: "btn g", href: "/amy"}, AMY.icon("grid"), h("span", {class: "lbl", text: L("الكونسول", "Console")}))));
   var left = h("section", {class: "tleft"}, h("div", {class: "pchips", id: "chips"}), h("div", {class: "grid", id: "grid"}));
   var disc = h("div", {class: "dscr"},
     h("span", {class: "mut", style: "font-size:var(--t-sm)", text: L("خصم", "Discount")}),
@@ -313,6 +315,97 @@ function build(){
   loadItems();
 }
 
+/* ---------- shift: open with cash, close with count ---------- */
+function signOut(){ AMY.call("logout", {}).then(function(){ location.href = "/amy-login" }, function(){ location.href = "/amy-login" }) }
+function money(label, el, hint){ return h("div", {class: "field", style: "margin-bottom:14px"}, h("label", {text: label}), el, hint ? h("div", {class: "mut", style: "font-size:var(--t-sm);margin-top:4px", text: hint}) : null) }
+function numIn(v){ return h("input", {class: "in", type: "number", step: "any", min: "0", inputmode: "decimal", dir: "ltr", value: v || v === 0 ? v : "", style: "font-size:var(--t-lg);height:52px"}) }
+
+function openShiftScreen(b){
+  var cash = numIn(0), go = h("button", {class: "btn p", type: "button", style: "height:52px;width:100%", text: L("ابدأ الوردية", "Start shift")});
+  var who = (b.user && b.user.full_name) || "";
+  AMY.clear($("till")).appendChild(h("div", {class: "setup"}, h("div", {style: "width:min(420px,100%);text-align:start"},
+    h("div", {class: "brand", style: "margin-bottom:22px;display:flex;align-items:center;gap:12px"}, h("img", {src: b.logo || "/assets/amy_pos/images/amy-logo.png", alt: "", style: "width:44px;height:44px;object-fit:contain;border-radius:10px"}), h("div", null, h("span", {text: "AMY"}), h("small", {text: b.company}))),
+    h("h2", {text: L("ابدأ ورديتك", "Start your shift"), style: "margin:0 0 4px"}),
+    h("p", {class: "mut", style: "margin:0 0 20px", text: who + (b.profile ? " · " + b.profile : "")}),
+    money(L("المبلغ الموجود في الدرج الآن", "Cash in the drawer now"), cash, L("عُدّ النقدية الموجودة قبل أن تبدأ البيع.", "Count the cash before you start selling.")),
+    go,
+    h("div", {style: "margin-top:16px;display:flex;gap:10px;justify-content:space-between"},
+      b.cashier ? h("button", {class: "btn g s", type: "button", onclick: signOut, text: L("خروج", "Sign out")}) : h("a", {class: "btn g s", href: "/amy", text: L("الكونسول", "Console")}),
+      h("button", {class: "btn g s", type: "button", text: ar ? "EN" : "عربي", onclick: function(){ try{ localStorage.setItem("amy_lang", ar ? "en" : "ar") }catch(e){} location.reload() }})))));
+  call("last_cash_left").then(function(v){ if(v > 0 && !Number(cash.value)) cash.value = v }).catch(function(){});
+  function start(){
+    var v = Number(cash.value);
+    if(cash.value === "" || !(v >= 0)){ AMY.toast(L("اكتب المبلغ الموجود في الدرج (صفر إن كان فارغًا).", "Enter the cash in the drawer (0 if empty)."), "bad"); cash.focus(); return }
+    go.disabled = true;
+    call("open_shift", {opening_cash: v, profile: b.profile}).then(function(sh){ S.boot.shift = sh; build() }).catch(function(e){ go.disabled = false; AMY.fail(e) });
+  }
+  go.addEventListener("click", start);
+  cash.addEventListener("keydown", function(e){ if(e.key === "Enter") start() });
+  setTimeout(function(){ cash.focus(); cash.select() }, 60);
+}
+
+function showShift(){
+  AMY.drawer(L("الوردية", "Shift"), function(dw){
+    dw.body.appendChild(h("div", {class: "sk", style: "width:60%"}));
+    call("shift_summary").then(function(sh){
+      AMY.clear(dw.body);
+      if(!sh){ dw.close(); return openShiftScreen(S.boot) }
+      S.boot.shift = sh;
+      var cur = S.boot.currency;
+      function row(l, v, strong){ return h("div", {class: "sumrow"}, h("span", {text: l}), h("b", {text: v, style: strong ? "font-size:var(--t-md)" : ""})) }
+      dw.body.appendChild(h("div", {class: "mut", style: "margin-bottom:10px", text: L("بدأت: ", "Started: ") + String(sh.opened_at).slice(0, 16)}));
+      dw.body.appendChild(row(L("مبلغ الافتتاح", "Opening cash"), num(sh.opening_cash)));
+      dw.body.appendChild(row(L("عدد العمليات", "Sales"), num(sh.count)));
+      sh.methods.forEach(function(m){ dw.body.appendChild(row(m.mode, num(m.amount))) });
+      dw.body.appendChild(row(L("المتوقع في الدرج", "Expected in drawer"), num(sh.expected_cash) + " " + cur, 1));
+      dw.body.appendChild(h("hr", {style: "border:0;border-top:1px solid var(--rule);margin:14px 0"}));
+      var counted = numIn(""), left = numIn(0), note = h("input", {class: "in", type: "text", autocomplete: "off"}), diff = h("div", {class: "paysum"}), dep = h("div", {class: "mut", style: "margin-bottom:12px"});
+      function calc(){
+        var c = Number(counted.value), l = Number(left.value) || 0;
+        AMY.clear(diff); AMY.clear(dep);
+        if(counted.value === "") return;
+        var d = rnd(c - sh.expected_cash);
+        diff.appendChild(h("div", null, h("small", {text: L("الفرق عن المتوقع", "Difference from expected")}), h("b", {style: "font-size:var(--t-num)", text: (d > 0 ? "+" : "") + num(d)})));
+        diff.appendChild(h("div", {class: "rest " + (d === 0 ? "ok" : "bad")}, h("small", {text: d === 0 ? L("مطابق", "Matches") : d > 0 ? L("زيادة", "Surplus") : L("عجز", "Shortage")})));
+        dep.textContent = L("يُورَّد للخزنة: ", "To deposit: ") + num(rnd(c - l)) + " " + cur;
+      }
+      counted.addEventListener("input", calc); left.addEventListener("input", calc);
+      dw.body.appendChild(money(L("النقدية المعدودة الآن في الدرج", "Cash counted in the drawer now"), counted));
+      dw.body.appendChild(money(L("المبلغ الذي تتركه في الدرج للوردية القادمة", "Cash you leave in the drawer"), left));
+      dw.body.appendChild(diff); dw.body.appendChild(dep);
+      dw.body.appendChild(money(L("ملاحظة (اختياري)", "Note (optional)"), note));
+      var end = h("button", {class: "btn p", type: "button", style: "width:100%;height:48px", text: L("إقفال الوردية", "Close shift"), onclick: function(){
+        if(S.cart.length){ AMY.toast(L("أنهِ البيع الجاري أو امسح السلة أولًا.", "Finish or clear the current cart first."), "bad"); return }
+        if(counted.value === ""){ AMY.toast(L("اكتب النقدية المعدودة.", "Enter the counted cash."), "bad"); counted.focus(); return }
+        if(Number(left.value) > Number(counted.value)){ AMY.toast(L("المتروك أكبر من المعدود.", "Cash left is more than counted."), "bad"); return }
+        AMY.confirm({title: L("إقفال الوردية؟", "Close the shift?"), sub: "", ok: L("نعم، أقفل", "Yes, close")}).then(function(ok){
+          if(!ok) return; end.disabled = true;
+          call("close_shift", {counted_cash: Number(counted.value), cash_left: Number(left.value) || 0, note: note.value}).then(function(r){ dw.close(); S.boot.shift = null; shiftReport(r) }).catch(function(e){ end.disabled = false; AMY.fail(e) });
+        });
+      }});
+      dw.footer.appendChild(end);
+    }).catch(function(e){ dw.close(); AMY.fail(e) });
+  });
+}
+
+function shiftReport(r){
+  var cur = S.boot.currency;
+  function row(l, v, c){ return h("div", {class: "sumrow"}, h("span", {text: l}), h("b", {text: v, class: c || ""})) }
+  var d = rnd(r.difference);
+  AMY.clear($("till")).appendChild(h("div", {class: "setup"}, h("div", {style: "width:min(440px,100%);text-align:start", id: "shrep"},
+    h("h2", {text: L("تم إقفال الوردية", "Shift closed"), style: "margin:0 0 4px"}),
+    h("p", {class: "mut", style: "margin:0 0 16px", text: (S.boot.user.full_name || "") + " · " + String(r.opened_at).slice(0, 16) + " → " + String(r.closed_at).slice(0, 16)}),
+    row(L("مبلغ الافتتاح", "Opening cash"), num(r.opening_cash)), row(L("عدد العمليات", "Sales"), num(r.count)),
+    (r.methods || []).map(function(m){ return row(m.mode, num(m.amount)) }),
+    row(L("المتوقع في الدرج", "Expected in drawer"), num(r.expected_cash) + " " + cur), row(L("المعدود", "Counted"), num(r.counted_cash) + " " + cur),
+    row(L("الفرق", "Difference"), (d > 0 ? "+" : "") + num(d), d === 0 ? "" : "bad"),
+    row(L("المتروك في الدرج", "Left in drawer"), num(r.cash_left) + " " + cur), row(L("يُورَّد للخزنة", "To deposit"), num(r.cash_to_deposit) + " " + cur),
+    h("div", {style: "display:flex;gap:8px;margin-top:20px"},
+      h("button", {class: "btn g", type: "button", style: "flex:1;height:48px", onclick: function(){ window.print() }}, AMY.icon("print"), L("طباعة", "Print")),
+      h("button", {class: "btn p", type: "button", style: "flex:1.4;height:48px", text: L("وردية جديدة", "New shift"), onclick: function(){ openShiftScreen(S.boot) }}),
+      S.boot.cashier ? h("button", {class: "btn g", type: "button", style: "flex:1;height:48px", text: L("خروج", "Sign out"), onclick: signOut}) : null))));
+}
+
 function setupScreen(msg){
   AMY.clear($("till")).appendChild(h("div", {class: "setup"}, h("div", {style: "max-width:420px"}, h("h2", {text: L("الكاشير يحتاج إعداداً بسيطاً", "The till needs a quick setup"), style: "margin:0 0 8px"}),
     h("p", {class: "mut", text: msg || L("لم نجد ملف نقطة بيع لحسابك. افتح الإعدادات > إعداد سريع وسيتم تجهيز كل شيء تلقائياً.", "We could not find a POS profile for your account. Open Settings > Quick setup and everything will be prepared automatically.")}),
@@ -323,6 +416,7 @@ document.documentElement.lang = AMY.lang; document.documentElement.dir = ar ? "r
 AMY.clear($("till")).appendChild(h("div", {class: "setup"}, h("div", {class: "mut", text: L("جاري تجهيز الكاشير…", "Preparing the till…")})));
 call("boot").then(function(b){
   if(!b || !b.ready) return setupScreen();
-  S.boot = b; build();
+  S.boot = b;
+  if(!b.shift) openShiftScreen(b); else build();
 }).catch(function(e){ if(e && e.silent) return; setupScreen((e && e.message) || ""); });
 })();

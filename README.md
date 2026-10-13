@@ -80,3 +80,24 @@ Set a customer's plan from the server (nothing locks when it expires; admins jus
     bench --site SITE set-config amy_support '{"whatsapp":"9665XXXXXXXX","email":"support@amytech.net"}' --parse
 
 `users` caps enabled users (0/unset = unlimited). Company gets two custom fields (Activity, Address) on migrate.
+
+## Accounts, cashiers and shifts
+
+Three kinds of account on every customer site:
+
+1. **Provider owner (hidden).** Set once per site; it holds every role, never appears in the customer's user list, never counts toward the plan's user limit and cannot be edited by the customer. It is the only account (besides Administrator) that can open the ERPNext desk; everyone else is sent to `/amy`.
+
+       bench --site SITE set-config amy_owner owner@yourcompany.com
+       bench --site SITE migrate                       # creates it (or: execute amy_pos.setup.accounts.ensure_owner)
+       bench --site SITE set-password owner@yourcompany.com 'long-password'
+
+2. **Customer admin** = the e-mail the customer subscribed with:
+
+       bench --site SITE execute amy_pos.setup.accounts.create_admin --kwargs '{"email":"customer@x.com","name":"Customer","password":"..."}'
+
+3. **Team**, created by the customer admin in Settings > General > Users & roles, up to the plan's `users` limit:
+   regular users (any role) and **cashiers**. A cashier is linked to one POS Profile and opens straight on the till (`/amy-pos`), never the console.
+
+**Shifts.** Nobody can sell at the till without an open shift. Opening asks for the cash in the drawer (pre-filled with what the last shift left);
+closing asks for the cash counted and the cash left in the drawer, shows shortage/surplus and the amount to deposit, and stores everything in
+the `AMY Shift` DocType (created on migrate; list under Point of sale > Cashier shifts).

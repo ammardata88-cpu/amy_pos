@@ -7,7 +7,7 @@ import json
 
 import frappe
 from frappe import _
-from frappe.utils import cint, flt, nowdate
+from frappe.utils import cint, flt, now_datetime, nowdate
 
 from amy_pos import rest
 from amy_pos.setup import defaults
@@ -78,6 +78,8 @@ def boot(profile=None):
         "groups": frappe.get_list("Item Group", filters={"is_group": 0}, pluck="name", order_by="name asc", limit_page_length=40),
         "user": {"name": frappe.session.user, "full_name": frappe.db.get_value("User", frappe.session.user, "full_name")},
         "can_discount": 1,
+        "cashier": rest._is_cashier(frappe.get_roles()),
+        "shift": _shift_info(_open_shift()),
     }
 
 
@@ -208,6 +210,8 @@ def totals(data, profile=None):
 @frappe.whitelist()
 def checkout(data, payments, profile=None):
     _need()
+    if not _open_shift():
+        frappe.throw(_("Open your shift first"))
     p = _profile(profile)
     if not p:
         frappe.throw(_("No POS Profile"))
@@ -262,3 +266,98 @@ def today():
                 m["amount"] -= chg
                 break
     return out
+
+
+# ------------------------------------------------------------------ shifts
+def _open_shift():
+    from amy_pos.setup import shift_doctype
+
+    shift_doctype.ensure()
+    name = frappe.db.get_value("AMY Shift", {"user": frappe.session.user, "status": "Open"}, "name", order_by="creation desc")
+    return frappe.get_doc("AMY Shift", name) if name else None
+
+
+def _sums(sh):
+    """Sales since the shift opened, split into cash (net of change given) and everything else."""
+    cond = "si.is_pos=1 and si.docstatus=1 and si.owner=%(u)s and si.creation>=%(a)s"
+    vals = {"u": sh.user, "a": sh.opened_at}
+    if sh.status == "Closed" and sh.closed_at:
+        cond += " and si.creation<=%(b)s"
+        vals["b"] = sh.closed_at
+    inv = frappe.db.sql(f"select count(*) c, coalesce(sum(change_amount),0) ch from `tabSales Invoice` si where {cond}", vals, as_dict=True)[0]
+    cash = other = 0.0
+    by = {}
+    for r in frappe.db.sql(f"""select p.mode_of_payment m, sum(p.amount) a from `tabSales Invoice Payment` p
+                              join `tabSales Invoice` si on si.name=p.parent where {cond} group by p.mode_of_payment""", vals, as_dict=True):
+        by[r.m] = flt(r.a)
+        if frappe.db.get_value("Mode of Payment", r.m, "type") == "Cash":
+            cash += flt(r.a)
+        else:
+            other += flt(r.a)
+    cash -= flt(inv.ch)
+    methods = [{"mode": m, "amount": a} for m, a in by.items()]
+    for m in methods:
+        if frappe.db.get_value("Mode of Payment", m["mode"], "type") == "Cash":
+            m["amount"] -= flt(inv.ch)
+    return {"count": cint(inv.c), "cash_sales": cash, "other_sales": other, "methods": methods,
+            "expected_cash": flt(sh.opening_cash) + cash}
+
+
+def _shift_info(sh):
+    if not sh:
+        return None
+    return {"name": sh.name, "opened_at": str(sh.opened_at), "opening_cash": flt(sh.opening_cash), "pos_profile": sh.pos_profile,
+            "status": sh.status, **_sums(sh)}
+
+
+@frappe.whitelist()
+def open_shift(opening_cash=0, profile=None):
+    _need()
+    if _open_shift():
+        frappe.throw(_("You already have an open shift"))
+    p = _profile(profile)
+    if not p:
+        frappe.throw(_("No POS Profile"))
+    amt = flt(opening_cash)
+    if amt < 0:
+        frappe.throw(_("Enter a valid amount"))
+    sh = frappe.get_doc({"doctype": "AMY Shift", "user": frappe.session.user, "pos_profile": p.name, "company": p.company,
+                         "status": "Open", "opened_at": now_datetime(), "opening_cash": amt})
+    sh.insert(ignore_permissions=True)
+    return _shift_info(sh)
+
+
+@frappe.whitelist()
+def shift_summary():
+    _need()
+    return _shift_info(_open_shift())
+
+
+@frappe.whitelist()
+def close_shift(counted_cash, cash_left=0, note=None):
+    """counted_cash = cash physically in the drawer now; cash_left = what stays in the drawer for the next shift."""
+    _need()
+    sh = _open_shift()
+    if not sh:
+        frappe.throw(_("No open shift"))
+    counted, left = flt(counted_cash), flt(cash_left)
+    if counted < 0 or left < 0:
+        frappe.throw(_("Enter a valid amount"))
+    if left > counted:
+        frappe.throw(_("The cash left in the drawer cannot be more than the cash counted"))
+    s = _sums(sh)
+    sh.update({"status": "Closed", "closed_at": now_datetime(), "invoice_count": s["count"], "cash_sales": s["cash_sales"],
+               "other_sales": s["other_sales"], "expected_cash": s["expected_cash"], "counted_cash": counted,
+               "difference": counted - s["expected_cash"], "cash_left": left, "cash_to_deposit": counted - left, "note": note})
+    sh.save(ignore_permissions=True)
+    out = _shift_info(sh)
+    out.update({"counted_cash": counted, "difference": sh.difference, "cash_left": left, "cash_to_deposit": sh.cash_to_deposit, "closed_at": str(sh.closed_at)})
+    return out
+
+
+@frappe.whitelist()
+def last_cash_left():
+    """Suggest the next opening amount: what the previous shift left in the drawer."""
+    _need()
+    v = frappe.db.get_value("AMY Shift", {"status": "Closed", "pos_profile": (_profile() or frappe._dict()).get("name")}, "cash_left", order_by="closed_at desc")
+    return flt(v)

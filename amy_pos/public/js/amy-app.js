@@ -109,7 +109,7 @@ function chrome(){
   up.appendChild(h("div",{class:"who"}, h("b",{text:b.user.full_name}), h("span",{text:b.user.name})));
   up.appendChild(h("hr"));
   up.appendChild(h("button",{type:"button",onclick:function(){ closeMenus(); changePassword() }}, AMY.icon("lock"), AMY.lang==="ar"?"تغيير كلمة المرور":"Change password"));
-  if(b.is_admin)
+  if(b.is_owner)
     up.appendChild(h("button",{type:"button",onclick:function(){ location.href="/app" }}, AMY.icon("grid"), t("desk")));
   up.appendChild(h("button",{type:"button",onclick:function(){
     AMY.call("logout",{}).then(function(){ location.href="/amy-login" },function(){ location.href="/amy-login" }) }}, AMY.icon("out"), t("signout")));

@@ -253,7 +253,7 @@ var ROLES = [
  ["admin",["مدير النظام","Administrator"],["كل الصلاحيات بما فيها المستخدمين والإعدادات","Full access including users and settings"]],
  ["manager",["مدير","Manager"],["المبيعات والمشتريات والمخزون والأصناف","Sales, purchasing, stock and items"]],
  ["sales",["مبيعات","Sales"],["فواتير المبيعات والعملاء","Sales invoices and customers"]],
- ["cashier",["كاشير","Cashier"],["نقاط البيع وفواتير المبيعات","POS and sales invoices"]],
+ ["cashier",["كاشير","Cashier"],["يفتح على شاشة الكاشير مباشرة ويعمل بورديته فقط","Opens straight on the till and works within his shift"]],
  ["purchasing",["مشتريات","Purchasing"],["فواتير المشتريات والموردين","Purchase invoices and suppliers"]],
  ["warehouse",["أمين مستودع","Storekeeper"],["المخزون والأصناف والجرد","Stock, items and counts"]],
  ["accountant",["محاسب","Accountant"],["القيود والمدفوعات والتقارير المالية","Journals, payments and financial reports"]]
@@ -282,14 +282,14 @@ V.users = function(root){
     }).catch(function(e){ AMY.clear(body); body.appendChild(h("tr",null,h("td",{colspan:4},h("div",{class:"err",text:e.message||t("err")})))); AMY.fail(e) });
   }
   function edit(u){
-    var isNew=!u, data = u? {email:u.name,first_name:u.first_name||"",last_name:u.last_name||"",mobile_no:u.mobile_no||"",amy_role:u.amy_role==="custom"?"":u.amy_role,enabled:u.enabled,language:u.language||"ar"} : {email:"",first_name:"",last_name:"",mobile_no:"",amy_role:"sales",enabled:1,language:"ar",password:""};
+    var isNew=!u, data = u? {email:u.name,first_name:u.first_name||"",last_name:u.last_name||"",mobile_no:u.mobile_no||"",amy_role:u.amy_role==="custom"?"":u.amy_role,pos_profile:u.pos_profile||"",enabled:u.enabled,language:u.language||"ar"} : {email:"",first_name:"",last_name:"",mobile_no:"",amy_role:"sales",enabled:1,language:"ar",password:""};
     AMY.drawer(isNew? (AMY.lang==="ar"?"مستخدم جديد":"New user") : (u.full_name||u.name), function(dw){
       function fld(label, el){ return h("div",{class:"field"},h("label",{text:label}),el) }
       function inp(k,type,ro){ var e=h("input",{class:"in",type:type||"text",value:data[k]||"",disabled:ro,autocomplete:"off"}); if(type==="email"||k==="mobile_no") e.setAttribute("dir","ltr"); e.addEventListener("input",function(){ data[k]=e.value }); return e }
       var roleBox = h("div",{style:"display:flex;flex-direction:column;gap:8px"});
       function drawRoles(){ AMY.clear(roleBox); ROLES.forEach(function(r){
         var on = data.amy_role===r[0];
-        roleBox.appendChild(h("button",{type:"button",class:"hubi",style:"padding:12px 14px;"+(on?"border-color:var(--brand2);box-shadow:0 0 0 4px var(--brand-r)":""),onclick:function(){ data.amy_role=r[0]; drawRoles() }},
+        roleBox.appendChild(h("button",{type:"button",class:"hubi",style:"padding:12px 14px;"+(on?"border-color:var(--brand2);box-shadow:0 0 0 4px var(--brand-r)":""),onclick:function(){ data.amy_role=r[0]; drawRoles(); if(typeof drawProf==="function") drawProf() }},
           h("div",null,h("b",{text:lb(r[1])}),h("span",{class:"d",text:lb(r[2])})))) }) }
       drawRoles();
       var en = h("label",{class:"chk"}, h("input",{type:"checkbox",checked:!!Number(data.enabled),onchange:function(e){ data.enabled=e.target.checked?1:0 }}), h("span",{text:AMY.lang==="ar"?"الحساب مفعّل":"Account is active"}));
@@ -298,6 +298,19 @@ V.users = function(root){
       dw.body.appendChild(fld(AMY.lang==="ar"?"الجوال":"Mobile", inp("mobile_no","tel")));
       dw.body.appendChild(fld(isNew? (AMY.lang==="ar"?"كلمة المرور":"Password") : (AMY.lang==="ar"?"كلمة مرور جديدة (اتركها فارغة للإبقاء)":"New password (leave blank to keep)"), inp("password","password")));
       dw.body.appendChild(fld(AMY.lang==="ar"?"الدور":"Role", roleBox));
+      var profBox = h("div"), profSel = h("select",{class:"in"});
+      function drawProf(){
+        AMY.clear(profBox);
+        if(data.amy_role!=="cashier") return;
+        profBox.appendChild(fld(AMY.lang==="ar"?"ملف الكاشير (المستودع وطرق الدفع)":"Till profile (warehouse and payment methods)", profSel));
+        profBox.appendChild(h("div",{class:"mut",style:"font-size:var(--t-sm)",text:AMY.lang==="ar"?"يفتح لهذا المستخدم شاشة الكاشير مباشرة بعد الدخول، ويبدأ وردية بمبلغ افتتاحي.":"This user lands straight on the till after sign-in and starts a shift with an opening amount."}));
+      }
+      AMY.rest("pos_profiles",{}).then(function(ps){
+        AMY.clear(profSel); ps.forEach(function(n){ profSel.appendChild(h("option",{value:n,text:n,selected:data.pos_profile===n})) });
+        if(!data.pos_profile && ps.length) data.pos_profile = ps[0];
+        profSel.addEventListener("change",function(){ data.pos_profile = profSel.value });
+      }).catch(function(){});
+      dw.body.appendChild(profBox); drawProf();
       dw.body.appendChild(en);
       dw.footer.appendChild(h("div",{style:"display:contents"},
         h("button",{class:"btn g",type:"button",onclick:dw.close,text:t("close")}),

@@ -143,8 +143,20 @@ function shifts(dt, slug, ar, en, cols){
   if(cols.indexOf("grand_total")>=0){ docs[dt].fields.push("grand_total"); docs[dt].sections[0].fields.push({f:"grand_total",t:"ro",l:["إجمالي المبيعات","Sales total"]},{f:"total_quantity",t:"ro",l:["إجمالي الكميات","Total qty"]}) }
   if(cols.indexOf("status")>=0) docs[dt].fields.push("status");
 }
-shifts("POS Opening Shift","pos-shifts","ورديات الكاشير","Cashier shifts",["status"]);
-shifts("POS Closing Shift","pos-closings","إغلاق الورديات","Shift closings",["grand_total"]);
+docs["AMY Shift"] = {
+ slug:"shifts", icon:"clock", label:["وردية","Shift"], plural:["ورديات الكاشير","Cashier shifts"], noNew:1, noDelete:1,
+ sub:["كل وردية: مبلغ الافتتاح، المبيعات، العهدة المعدودة، والعجز أو الزيادة.","Each shift: opening cash, sales, counted cash and any shortage or surplus."],
+ search:["name","user"], fields:["user","pos_profile","status","opened_at","closed_at","opening_cash","cash_sales","other_sales","expected_cash","counted_cash","difference","cash_left","cash_to_deposit","invoice_count","note"],
+ baseFilters:{}, chips:[{l:ALL,filters:{}},{l:["مفتوحة","Open"],filters:{status:"Open"}},{l:["مغلقة","Closed"],filters:{status:"Closed"}}],
+ cols:[{f:"user",l:["الكاشير","Cashier"]},{f:"opened_at",l:["الفتح","Opened"],t:"date"},{f:"status",l:["الحالة","Status"],t:"status"},{f:"cash_sales",l:["نقدي","Cash sales"],t:"money",end:1},{f:"difference",l:["العجز/الزيادة","Difference"],t:"money",end:1}],
+ sections:[{title:["الوردية","Shift"],fields:[
+  {f:"user",t:"ro",l:["الكاشير","Cashier"]},{f:"pos_profile",t:"ro",l:["الملف","Profile"]},{f:"status",t:"ro",l:["الحالة","Status"]},{f:"invoice_count",t:"ro",l:["عدد الفواتير","Invoices"]},
+  {f:"opened_at",t:"ro",l:["وقت الفتح","Opened"]},{f:"closed_at",t:"ro",l:["وقت الإقفال","Closed"]}]},
+  {title:["النقدية","Cash"],fields:[
+  {f:"opening_cash",t:"ro",l:["مبلغ الافتتاح","Opening cash"]},{f:"cash_sales",t:"ro",l:["مبيعات نقدية","Cash sales"]},{f:"other_sales",t:"ro",l:["مبيعات بطاقة وغيرها","Card & other sales"]},
+  {f:"expected_cash",t:"ro",l:["المتوقع في الدرج","Expected in drawer"]},{f:"counted_cash",t:"ro",l:["المعدود فعليًا","Counted"]},{f:"difference",t:"ro",l:["العجز / الزيادة","Difference"]},
+  {f:"cash_left",t:"ro",l:["المتروك في الدرج","Left in drawer"]},{f:"cash_to_deposit",t:"ro",l:["المورَّد للخزنة","To deposit"]},{f:"note",t:"ro",l:["ملاحظة","Note"],span:2}]}]
+};
 
 /* ---------- promotions ---------- */
 docs["Pricing Rule"] = {
@@ -205,8 +217,7 @@ AMY.cfg.nav = [
  {id:"pos",icon:"cart",l:["نقاط البيع","Point of sale"],k:[
   {to:"/pos",l:["فتح الكاشير","Open the till"],ext:"/amy-pos",dt:"Sales Invoice"},
   {to:"/pos-profiles",l:["ملفات نقاط البيع","POS profiles"],dt:"POS Profile"},
-  {to:"/pos-shifts",l:["ورديات الكاشير","Cashier shifts"],dt:"POS Opening Shift"},
-  {to:"/pos-closings",l:["إغلاق الورديات","Shift closings"],dt:"POS Closing Shift"}]},
+  {to:"/shifts",l:["ورديات الكاشير","Cashier shifts"],dt:"AMY Shift"}]},
  {id:"stock",icon:"stock",l:["المنتجات والمخزون","Products & stock"],k:[
   {to:"/items",l:["المنتجات","Items"],dt:"Item"},
   {to:"/item-groups",l:["الفئات","Categories"],dt:"Item Group"},

@@ -88,3 +88,6 @@ body.tillpage{height:100vh;overflow:hidden;background:var(--ground)}
   .ctop{display:flex!important}
 }
 .ctop{display:none;align-items:center;justify-content:space-between;padding:var(--s3) var(--s4);border-bottom:1px solid var(--rule)}
+
+.sumrow b.bad{color:var(--bad)}
+@media print{.tbar,.minibar{display:none!important}.setup{height:auto}}
