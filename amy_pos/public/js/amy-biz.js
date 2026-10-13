@@ -156,10 +156,6 @@ AMY.cfg.nav.forEach(function(g){
     g.k.push({to:"/batches", l:["الدفعات وتواريخ الصلاحية","Batches & expiry"], dt:"Batch", ind:["pharmacy"]});
     g.k.push({to:"/bundles", l:["الباقات والعروض المركّبة","Bundles & combos"], dt:"Product Bundle"});
   }
-  if(g.id === "set"){
-    g.k.splice(1, 0, {to:"/industry", l:["نوع النشاط","Business type"], admin:1});
-    g.k.push({to:"/payment-terms", l:["شروط السداد","Payment terms"], dt:"Payment Terms Template"});
-  }
 });
 AMY.cfg.settings.splice(1, 0,
   {to:"/industry", icon:"building", l:["نوع النشاط","Business type"], d:["تجزئة أو مطعم أو صيدلية أو جملة، لتظهر لك الحقول المناسبة.", "Retail, restaurant, pharmacy or wholesale, so you see the right fields."], admin:1},

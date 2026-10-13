@@ -37,7 +37,11 @@ def ensure_custom_fields():
         "options": "\n" + "\n".join(CLASSES),
         "description": "standard, zero (0%), export, exempt, import (reverse charge), out of scope",
     }]
-    create_custom_fields({TEMPLATE["sales"]: f, TEMPLATE["purchase"]: f}, ignore_validate=True)
+    co = [
+        {"fieldname": "amy_activity", "label": "Activity", "fieldtype": "Data", "insert_after": "website"},
+        {"fieldname": "amy_address", "label": "Address", "fieldtype": "Small Text", "insert_after": "amy_activity"},
+    ]
+    create_custom_fields({TEMPLATE["sales"]: f, TEMPLATE["purchase"]: f, "Company": co}, ignore_validate=True)
 
 
 # ================================================================ chart of accounts

@@ -336,10 +336,12 @@ docs["Company"] = {
  slug:"companies", icon:"building", label:["الشركة","Company"], plural:["الشركة","Company"], noDelete:1, search:["name"], fields:["company_name"], cols:[{f:"name",l:["الشركة","Company"]}],
  sections:[
   {title:["بيانات الشركة","Company details"],fields:[
-   {f:"company_name",t:"data",l:["اسم الشركة","Company name"],ro:1,span:2},{f:"abbr",t:"data",l:["الاختصار","Abbreviation"],ro:1},{f:"default_currency",t:"data",l:["العملة","Currency"],ro:1},
-   {f:"tax_id",t:"data",l:["الرقم الضريبي","Tax ID"],dir:"ltr"},{f:"phone_no",t:"data",l:["الهاتف","Phone"],dir:"ltr"},
-   {f:"email",t:"data",l:["البريد الإلكتروني","Email"],dir:"ltr"},{f:"website",t:"data",l:["الموقع الإلكتروني","Website"],dir:"ltr"},
-   {f:"company_logo",t:"image",l:["شعار الشركة","Logo"],span:4}]}]
+   {f:"company_logo",t:"image",l:["شعار الشركة","Logo"],span:4},
+   {f:"tax_id",t:"data",l:["الرقم الضريبي","Tax number"],dir:"ltr"},{f:"company_name",t:"data",l:["اسم الشركة","Company name"],ro:1},
+   {f:"email",t:"data",l:["البريد الإلكتروني","Email"],dir:"ltr"},{f:"phone_no",t:"data",l:["رقم الجوال","Mobile"],dir:"ltr"},
+   {f:"website",t:"data",l:["الموقع الإلكتروني","Website"],dir:"ltr"},{f:"amy_activity",t:"data",l:["النشاط","Activity"]},
+   {f:"amy_address",t:"text",l:["العنوان","Address"],span:2},{f:"registration_details",t:"data",l:["السجل التجاري","Commercial register"],dir:"ltr"},
+   {f:"abbr",t:"data",l:["الاختصار","Abbreviation"],ro:1},{f:"default_currency",t:"data",l:["العملة","Currency"],ro:1}]}]
 };
 
 /* ---------- ZATCA ---------- */
@@ -405,10 +407,7 @@ AMY.cfg.nav = [
   {to:"/zatca",l:["الفوترة الإلكترونية","E-invoicing"],dt:"Sales Invoice Additional Fields",app:"zatca"}]},
  {to:"/reports",icon:"rep",l:["التقارير","Reports"]},
  {id:"set",icon:"set",l:["الإعدادات","Settings"],k:[
-  {to:"/settings",l:["كل الإعدادات","All settings"]},
-  {to:"/users",l:["المستخدمون والصلاحيات","Users & roles"],admin:1},
-  {to:"company",l:["بيانات الشركة","Company"],dt:"Company"},
-  {to:"/sales-taxes",l:["الضرائب","Taxes"],dt:"Sales Taxes and Charges Template"},
-  {to:"/payment-methods",l:["طرق الدفع","Payment methods"],dt:"Mode of Payment"}]}
+  {to:"/settings",l:["عام","General"],alias:["/users","/tax-types","/sales-taxes","/payment-methods","/warehouses","/e-invoicing","/industry","/setup","/companies"]},
+  {to:"/subscription",l:["الاشتراك","Subscription"],admin:1}]}
 ];
 })();

@@ -226,12 +226,8 @@ AMY.cfg.nav = [
   {to:"/zatca",l:["الفوترة الإلكترونية","E-invoicing"],dt:"Sales Invoice Additional Fields",app:"zatca"}]},
  {to:"/reports",icon:"rep",l:["التقارير","Reports"]},
  {id:"set",icon:"set",l:["الإعدادات","Settings"],k:[
-  {to:"/settings",l:["كل الإعدادات","All settings"]},
-  {to:"/users",l:["المستخدمون والصلاحيات","Users & roles"],admin:1},
-  {to:"company",l:["بيانات الشركة","Company"],dt:"Company"},
-  {to:"/sales-taxes",l:["الضرائب","Taxes"],dt:"Sales Taxes and Charges Template"},
-  {to:"/payment-methods",l:["طرق الدفع","Payment methods"],dt:"Mode of Payment"},
-  {to:"/territories",l:["المناطق","Territories"],dt:"Territory"}]}
+  {to:"/settings",l:["عام","General"],alias:["/users","/tax-types","/sales-taxes","/payment-methods","/warehouses","/e-invoicing","/industry","/setup","/companies"]},
+  {to:"/subscription",l:["الاشتراك","Subscription"],admin:1}]}
 ];
 /* more tiles on the settings page */
 AMY.cfg.settings.splice(2,0,
@@ -286,7 +282,6 @@ V.dashboard = function(root){
     root.insertBefore(n, root.children[1] || null);
   }).catch(function(){});
 };
-AMY.cfg.nav.forEach(function(g){ if(g.id==="set") g.k.splice(1,0,{to:"/setup",l:["التهيئة السريعة","Quick setup"],admin:1}) });
 AMY.cfg.settings.unshift({to:"/setup",icon:"check",l:["التهيئة السريعة","Quick setup"],d:["جهّز الضريبة وطرق الدفع والمستودع وملف الكاشير بضغطة.","Set up VAT, payment methods, warehouse and the till in one click."],admin:1});
 
 /* ---------- command palette (Ctrl K): jump to any page, create anything, find records ---------- */

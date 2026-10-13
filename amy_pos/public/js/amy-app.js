@@ -20,6 +20,7 @@ function visible(it){
   return can(it.dt);
 }
 var opened = {};
+function on(k){ return !k.ext && (isOn(k.to) || (k.alias||[]).some(isOn)) }
 AMY.renderNav = function(){
   var nav = $("nav"); AMY.clear(nav);
   AMY.cfg.nav.forEach(function(g){
@@ -28,7 +29,7 @@ AMY.renderNav = function(){
       return;
     }
     var kids = g.k.filter(visible); if(!kids.length) return;
-    var active = kids.some(function(k){ return !k.ext && isOn(k.to) });
+    var active = kids.some(on);
     var box = h("div",{class:"grp"+((active||opened[g.id])?" open":"")});
     var head = h("button",{class:"gh",type:"button",title:lb(g.l),onclick:function(){
       if(document.body.classList.contains("rail") && window.innerWidth>900){ document.body.classList.remove("rail"); try{ localStorage.setItem("amy_rail","0") }catch(e){} }
@@ -36,7 +37,7 @@ AMY.renderNav = function(){
       AMY.icon(g.icon), h("span",{text:lb(g.l)}), AMY.icon("chev","chev"));
     var sub = h("div",{class:"sub"});
     kids.forEach(function(k){
-      sub.appendChild(h("button",{class:"ni"+(!k.ext && isOn(k.to)?" on":""),type:"button",onclick:function(){ if(k.ext) location.href=k.ext; else AMY.go(path(k.to)) }}, h("span",{text:lb(k.l)})));
+      sub.appendChild(h("button",{class:"ni"+(on(k)?" on":""),type:"button",onclick:function(){ if(k.ext) location.href=k.ext; else AMY.go(path(k.to)) }}, h("span",{text:lb(k.l)})));
     });
     box.appendChild(head); box.appendChild(sub); nav.appendChild(box);
   });
@@ -48,7 +49,8 @@ AMY.dispatch = function(p, root){
   if(s[0]==="reports") return V.reportsHub(root);
   if(s[0]==="report") return V.report(s[1], root);
   if(s[0]==="users"){ if(!AMY.boot.is_admin) return root.appendChild(AMY.emptyBox(t("noperm"),"")); return V.users(root) }
-  if(s[0]==="settings") return V.settings(root);
+  if(s[0]==="settings") return s[1]==="more" ? V.settings(root) : V.generalSettings(root, p);
+  if(s[0]==="subscription"){ if(!AMY.boot.is_admin) return root.appendChild(AMY.emptyBox(t("noperm"),"")); return V.subscription(root) }
   if(s[0]==="industry"){ if(!AMY.boot.is_admin) return root.appendChild(AMY.emptyBox(t("noperm"),"")); return V.industry(root) }
   if(s[0]==="chart"){ if(!can("Account")) return root.appendChild(AMY.emptyBox(t("noperm"),"")); return V.coa(root) }
   if(s[0]==="tax-types"){ if(!can("Sales Taxes and Charges Template")) return root.appendChild(AMY.emptyBox(t("noperm"),"")); return V.taxTypes(root) }

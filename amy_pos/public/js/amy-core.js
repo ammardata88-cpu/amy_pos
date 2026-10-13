@@ -286,6 +286,7 @@ AMY.render = function(){
   window.scrollTo(0,0);
   AMY.curRoute = p;
   try{ AMY.dispatch(p, root) }catch(e){ root.appendChild(h("div",{class:"err",text:(e&&e.message)||AMY.t("err")})); if(window.console) console.error(e) }
+  if(AMY.decorate){ try{ AMY.decorate(p, root) }catch(e){ if(window.console) console.error(e) } }
   if(AMY.renderNav) AMY.renderNav();
 };
 window.addEventListener("hashchange", function(){ AMY.render() });

@@ -273,7 +273,7 @@ V.form = function(dt, name, p, root){
 
     /* ----- sections ----- */
     var head = AMY.pageHeader({
-      crumbs:[{text:lb(cfg.plural),href:"#"+route(cfg)}, {text:isNew? t("new") : (cfg.titleOf? cfg.titleOf(doc) : doc.name)}],
+      crumbs:p.q.__plain? null : [{text:lb(cfg.plural),href:"#"+route(cfg)}, {text:isNew? t("new") : (cfg.titleOf? cfg.titleOf(doc) : doc.name)}],
       title: isNew? lb(cfg.newTitle||cfg.label) : (cfg.titleOf? cfg.titleOf(doc) : doc.name),
       pill: !isNew && submittable? AMY.docPill(doc.docstatus) : null,
       sub: !isNew && cfg.subOf? cfg.subOf(doc) : ""});

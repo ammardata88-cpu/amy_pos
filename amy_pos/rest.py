@@ -123,6 +123,15 @@ def _flags(doc):
     return perms
 
 
+def _sub():
+    try:
+        from amy_pos import plan
+
+        return plan.summary()
+    except Exception:
+        return None
+
+
 # ---------------------------------------------------------------- bootstrap
 @frappe.whitelist()
 def bootstrap():
@@ -153,6 +162,7 @@ def bootstrap():
         "perms": perms,
         "apps": {"pos_next": "pos_next" in apps, "zatca": "ksa_compliance" in apps},
         "industry": frappe.db.get_default("amy_industry") or "retail",
+        "sub": _sub(),
     }
 
 
@@ -739,6 +749,9 @@ def save_user(data):
         if email == frappe.session.user and not cint(d.get("enabled", 1)):
             frappe.throw(_("You cannot disable your own account"))
     else:
+        from amy_pos import plan
+
+        plan.check_user_limit()
         doc = frappe.new_doc("User")
         doc.email = email
         doc.send_welcome_email = 0

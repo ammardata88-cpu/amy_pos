@@ -68,3 +68,15 @@ scripts/                    bench and site installers
 ```
 
 License: MIT
+
+## Settings and subscription
+
+Settings is a sidebar group with **General** (company info with horizontal tabs: users & roles, sites, taxes,
+payment methods, e-invoicing, business type, quick setup, more) and **Subscription**.
+
+Set a customer's plan from the server (nothing locks when it expires; admins just see a banner):
+
+    bench --site SITE set-config amy_subscription '{"plan":"pro","plan_name":["الاحترافية","Professional"],"start":"2026-10-13","end":"2027-10-12","users":10,"price":199,"currency":"SAR","period":"month"}' --parse
+    bench --site SITE set-config amy_support '{"whatsapp":"9665XXXXXXXX","email":"support@amytech.net"}' --parse
+
+`users` caps enabled users (0/unset = unlimited). Company gets two custom fields (Activity, Address) on migrate.
