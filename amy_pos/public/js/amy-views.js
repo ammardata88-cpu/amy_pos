@@ -196,13 +196,14 @@ V.form = function(dt, name, p, root){
     function tableControl(tb){
       var rows = doc[tb.f] = doc[tb.f] || [];
       var box = h("div"), tbody = h("tbody"), editable = !ro && !tb.ro, tools = editable && !tb.fixed;
-      var tbl = h("table",{class:"itbl"}, h("thead",null, h("tr",null, tb.cols.map(function(c){ return h("th",{style:c.w?"width:"+c.w:"",text:lb(c.l)}) }), (tools||tb.open)? h("th",{style:"width:44px"}) : null)), tbody);
+      var tcols = tb.cols.filter(function(c){ return !c.show || c.show(doc) });
+      var tbl = h("table",{class:"itbl"}, h("thead",null, h("tr",null, tcols.map(function(c){ return h("th",{style:c.w?"width:"+c.w:"",text:lb(c.l)}) }), (tools||tb.open)? h("th",{style:"width:44px"}) : null)), tbody);
       function addRow(){ var r = tb.newRow? tb.newRow(doc) : {}; rows.push(r); draw(); var first = tbody.lastChild && tbody.lastChild.querySelector("input"); if(first) first.focus() }
       function draw(){
         AMY.clear(tbody);
         rows.forEach(function(r,ri){
           var tr = h("tr");
-          tb.cols.forEach(function(c){
+          tcols.forEach(function(c){
             var td = h("td");
             if(c.t==="calc"){
               var span = h("div",{class:"in num",style:"display:flex;align-items:center;background:#F6F8FB",dir:"ltr"}, AMY.money(r[c.f]||0)); r["_"+c.f+"El"]=span; td.appendChild(span);
@@ -226,7 +227,7 @@ V.form = function(dt, name, p, root){
           else if(tb.open){ var op = tb.open(r); tr.appendChild(h("td",null, op? h("a",{class:"x",href:"#"+op,title:t("openRec")},AMY.icon("chevL")) : null)) }
           tbody.appendChild(tr);
         });
-        if(!rows.length) tbody.appendChild(h("tr",null,h("td",{colspan:tb.cols.length+1,class:"mut",style:"text-align:center;padding:22px"},t("noData"))));
+        if(!rows.length) tbody.appendChild(h("tr",null,h("td",{colspan:tcols.length+1,class:"mut",style:"text-align:center;padding:22px"},t("noData"))));
       }
       draw();
       box.appendChild(h("div",{class:"scroll"}, tbl));

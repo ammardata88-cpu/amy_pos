@@ -11,14 +11,14 @@ var ALL = ["الكل","All"];
 /* ---------- shared pieces ---------- */
 function invoiceItemCols(){
   return [
-   {f:"item_code",t:"link",dt:"Item",l:["الصنف","Item"],w:"27%",req:1},
+   {f:"item_code",t:"link",dt:"Item",l:["الصنف","Item"],w:"26%",req:1},
    {f:"qty",t:"float",l:["الكمية","Qty"],w:"9%",req:1},
    {f:"uom",t:"link",dt:"UOM",l:["الوحدة","Unit"],w:"11%"},
    {f:"rate",t:"money",l:["السعر","Rate"],w:"12%",req:1},
    {f:"discount_percentage",t:"percent",l:["خصم %","Disc %"],w:"8%"},
    {f:"amount",t:"calc",l:["الإجمالي","Amount"],w:"13%"},
-   {f:"warehouse",t:"link",dt:"Warehouse",l:["المستودع","Warehouse"],w:"16%",filters:function(doc){ return whs(doc) }},
-   {f:"batch_no",t:"link",dt:"Batch",l:["الدفعة","Batch"],w:"13%",filters:function(doc, row){ return row && row.item_code? {item:row.item_code} : {} }}
+   {f:"warehouse",t:"link",dt:"Warehouse",l:["المستودع","Warehouse"],w:"21%",filters:function(doc){ return whs(doc) }},
+   {f:"batch_no",t:"link",dt:"Batch",l:["الدفعة","Batch"],w:"14%",show:function(doc){ return (AMY.boot.industry==="pharmacy") || (doc.items||[]).some(function(r){ return r.batch_no }) },filters:function(doc, row){ return row && row.item_code? {item:row.item_code} : {} }}
   ];
 }
 function invoicePanel(party){
