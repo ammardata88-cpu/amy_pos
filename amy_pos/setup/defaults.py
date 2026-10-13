@@ -368,6 +368,13 @@ def repair_profiles(company):
         doc = frappe.get_doc("POS Profile", pname)
         good = [r for r in doc.get("payments") if frappe.db.exists("Mode of Payment Account", {"parent": r.mode_of_payment, "company": company})]
         if good:
+            # additive: offer every cash/bank method of the company at the till
+            have = {r.mode_of_payment for r in doc.get("payments")}
+            extra = [m.name for m in _company_modes(company) if m.name not in have]
+            if extra:
+                for m in extra:
+                    doc.append("payments", {"mode_of_payment": m, "default": 0})
+                doc.save(ignore_permissions=True)
             continue
         _fix_accounts(company, c)
         _fix_modes(company, frappe.get_cached_doc("Company", company))
@@ -390,6 +397,7 @@ def ensure_pos(company=None):
             if not frappe.db.exists("POS Profile", {"company": co, "disabled": 0}):
                 apply(co)
                 made += 1 if frappe.db.exists("POS Profile", {"company": co, "disabled": 0}) else 0
+            _fix_modes(co, frappe.get_cached_doc("Company", co))
             repair_profiles(co)
             sync_pos_users(co)
             frappe.db.commit()
