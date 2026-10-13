@@ -29,6 +29,10 @@ ERPNext's `/login` and `/update-password` redirect there. Sessions, roles and pe
 Frappe underneath. On sites with `amy_console: 1`, users without System Manager are sent from `/app` to `/amy`.
 Sign-in and reset are rate limited per IP (`amy_pos/guard.py`).
 
+## AMY till
+
+`/amy-pos` is a one-screen point of sale (items, cart, customer, discount, split payment, hold, receipt, today's totals). It creates normal Sales Invoices (`is_pos`), so stock, accounts and ZATCA behave as in the console. It prepares its own POS Profile and lists the user automatically; POS Next is no longer needed.
+
 ## Install on a bench (once)
 
 ```bash

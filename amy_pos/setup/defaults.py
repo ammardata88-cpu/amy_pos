@@ -328,6 +328,36 @@ def sync_pos_users(company=None, only=None):
     return len(todo)
 
 
+def _company_modes(company):
+    """Cash/bank payment methods that already have an account for this company, cash first."""
+    out = []
+    for m in frappe.get_all("Mode of Payment", filters={"enabled": 1, "type": ["in", ["Cash", "Bank"]]},
+                            fields=["name", "type"], order_by="type asc, creation asc"):
+        if frappe.db.exists("Mode of Payment Account", {"parent": m.name, "company": company}):
+            out.append(m)
+    return out
+
+
+def repair_profiles(company):
+    """A profile with no usable payment methods is what makes the till say 'No payment methods'."""
+    c = frappe.get_cached_doc("Company", company)
+    for pname in frappe.get_all("POS Profile", filters={"company": company, "disabled": 0}, pluck="name"):
+        doc = frappe.get_doc("POS Profile", pname)
+        good = [r for r in doc.get("payments") if frappe.db.exists("Mode of Payment Account", {"parent": r.mode_of_payment, "company": company})]
+        if good:
+            continue
+        _fix_accounts(company, c)
+        _fix_modes(company, frappe.get_cached_doc("Company", company))
+        modes = _company_modes(company)
+        if not modes:
+            continue
+        doc.set("payments", [{"mode_of_payment": m.name, "default": 1 if i == 0 else 0} for i, m in enumerate(modes)])
+        for f, v in (("write_off_account", c.write_off_account), ("write_off_cost_center", c.cost_center), ("cost_center", c.cost_center)):
+            if doc.meta.has_field(f) and not doc.get(f) and v:
+                doc.set(f, v)
+        doc.save(ignore_permissions=True)
+
+
 def ensure_pos(company=None):
     """Every company gets a ready POS Profile and every cashier-capable user is listed on one."""
     companies = [company] if company else frappe.get_all("Company", pluck="name", order_by="creation asc")
@@ -337,6 +367,7 @@ def ensure_pos(company=None):
             if not frappe.db.exists("POS Profile", {"company": co, "disabled": 0}):
                 apply(co)
                 made += 1 if frappe.db.exists("POS Profile", {"company": co, "disabled": 0}) else 0
+            repair_profiles(co)
             sync_pos_users(co)
             frappe.db.commit()
         except Exception:

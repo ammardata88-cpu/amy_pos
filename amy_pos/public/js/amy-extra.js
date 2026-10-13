@@ -203,7 +203,7 @@ AMY.cfg.nav = [
   {to:"/payments",l:["المدفوعات والمقبوضات","Payments"],dt:"Payment Entry"},
   {to:"/promotions",l:["العروض والخصومات","Promotions"],dt:"Pricing Rule"}]},
  {id:"pos",icon:"cart",l:["نقاط البيع","Point of sale"],k:[
-  {to:"/pos",l:["فتح الكاشير","Open the till"],ext:"/pos",app:"pos_next"},
+  {to:"/pos",l:["فتح الكاشير","Open the till"],ext:"/amy-pos",dt:"Sales Invoice"},
   {to:"/pos-profiles",l:["ملفات نقاط البيع","POS profiles"],dt:"POS Profile"},
   {to:"/pos-shifts",l:["ورديات الكاشير","Cashier shifts"],dt:"POS Opening Shift"},
   {to:"/pos-closings",l:["إغلاق الورديات","Shift closings"],dt:"POS Closing Shift"}]},

@@ -386,7 +386,7 @@ AMY.cfg.settings = [
 AMY.cfg.nav = [
  {to:"/",icon:"home",l:["الرئيسية","Home"]},
  {id:"sales",icon:"sales",l:["المبيعات والعملاء","Sales & Customers"],k:[
-  {to:"/pos",l:["نقاط البيع","POS"],ext:"/pos",app:"pos_next"},
+  {to:"/pos",l:["نقاط البيع","POS"],ext:"/amy-pos",dt:"Sales Invoice"},
   {to:"/sales-invoices",l:["فواتير المبيعات","Sales invoices"],dt:"Sales Invoice"},
   {to:"/customers",l:["العملاء","Customers"],dt:"Customer"},
   {to:"/payments",l:["المدفوعات والمقبوضات","Payments"],dt:"Payment Entry"}]},

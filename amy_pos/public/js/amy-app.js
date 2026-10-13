@@ -93,7 +93,7 @@ function chrome(){
   var T = AMY.lang==="ar"; var b = AMY.boot;
   document.documentElement.lang = AMY.lang; document.documentElement.dir = T? "rtl" : "ltr";
   $("newTxt").textContent = t("new"); $("posTxt").textContent = t("pos");
-  $("posTop").classList.toggle("hide", !b.apps.pos_next);
+  $("posTop").classList.toggle("hide", !(b.perms["Sales Invoice"] && b.perms["Sales Invoice"].create));
   $("lang").textContent = T? "EN" : "عربي";
   $("company").textContent = b.company || "";
   var np = $("newPop"); AMY.clear(np);
@@ -124,16 +124,6 @@ try{ if(localStorage.getItem("amy_rail")==="1") document.body.classList.add("rai
 $("lang").addEventListener("click",function(){
   AMY.lang = AMY.lang==="ar"? "en" : "ar"; try{ localStorage.setItem("amy_lang", AMY.lang) }catch(e){}
   chrome(); AMY.render();
-});
-
-/* The till opens with no setup: make sure a POS Profile lists this user first. */
-document.addEventListener("click",function(e){
-  var a = e.target.closest && e.target.closest('a[href="/pos"]'); if(!a || e.metaKey || e.ctrlKey) return;
-  e.preventDefault();
-  AMY.call("amy_pos.ops.pos_ready",{}).then(function(r){
-    if(r && r.ok) location.href = "/pos";
-    else AMY.toast(AMY.lang==="ar"?"تعذّر تجهيز الكاشير. تأكد من وجود شركة ومستودع وطرق دفع، أو من الإعدادات > إعداد سريع.":"Could not prepare the till. Check the company, warehouse and payment methods, or run Settings > Quick setup.","bad");
-  }).catch(function(err){ if(err && err.silent) return; location.href = "/pos" });
 });
 
 /* ---------- start ---------- */
