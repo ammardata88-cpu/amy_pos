@@ -68,8 +68,6 @@ def apply_branding():
     try:
         nb = frappe.get_single("Navbar Settings")
         _set(nb, app_logo=LOGO)
-        if nb.meta.has_field("help_dropdown"):
-            nb.set("help_dropdown", [])
         nb.save(ignore_permissions=True)
     except Exception:
         frappe.log_error(title="AMY POS: navbar branding")

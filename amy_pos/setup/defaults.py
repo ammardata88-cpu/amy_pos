@@ -166,12 +166,26 @@ def _fix_tax(company, c, sales):
                     "taxes": [row]}).insert(ignore_permissions=True)
 
 
+# ksa_compliance adds a mandatory "ZATCA Payment Means Code" to Mode of Payment. It must never stop
+# the till from getting its payment methods, so saves below skip mandatory checks and new modes get a code.
+ZATCA_MEANS = {"Cash": "10", "Card": "48", "Bank Transfer": "30"}
+
+
+def _means(doc, name):
+    f = "custom_zatca_payment_means_code"
+    if doc.meta.has_field(f) and not doc.get(f) and name in ZATCA_MEANS:
+        doc.set(f, ZATCA_MEANS[name])
+
+
 def _ensure_mode(name, typ, ar_label=None):
     if frappe.db.exists("Mode of Payment", {"enabled": 1, "type": typ}):
         return
     if frappe.db.exists("Mode of Payment", name):
         return
-    frappe.get_doc({"doctype": "Mode of Payment", "mode_of_payment": name, "type": typ, "enabled": 1}).insert(ignore_permissions=True)
+    doc = frappe.get_doc({"doctype": "Mode of Payment", "mode_of_payment": name, "type": typ, "enabled": 1})
+    _means(doc, name)
+    doc.flags.ignore_mandatory = True
+    doc.insert(ignore_permissions=True)
 
 
 def _fix_modes(company, c):
@@ -180,16 +194,25 @@ def _fix_modes(company, c):
     # a transfer method too, if the site has only one bank-type method
     if frappe.db.count("Mode of Payment", {"enabled": 1, "type": "Bank"}) < 2:
         if not frappe.db.exists("Mode of Payment", "Bank Transfer"):
-            frappe.get_doc({"doctype": "Mode of Payment", "mode_of_payment": "Bank Transfer", "type": "Bank", "enabled": 1}).insert(ignore_permissions=True)
+            doc = frappe.get_doc({"doctype": "Mode of Payment", "mode_of_payment": "Bank Transfer", "type": "Bank", "enabled": 1})
+            _means(doc, "Bank Transfer")
+            doc.flags.ignore_mandatory = True
+            doc.insert(ignore_permissions=True)
     cash, bank = _cash_account(company, c), _bank_account(company, c)
     for m in frappe.get_all("Mode of Payment", filters={"enabled": 1, "type": ["in", ["Cash", "Bank"]]}, fields=["name", "type"]):
         if frappe.db.exists("Mode of Payment Account", {"parent": m.name, "company": company}):
             continue
         acc = cash if m.type == "Cash" else bank
-        if acc:
+        if not acc:
+            continue
+        try:
             doc = frappe.get_doc("Mode of Payment", m.name)
             doc.append("accounts", {"company": company, "default_account": acc})
+            doc.flags.ignore_mandatory = True
             doc.save(ignore_permissions=True)
+        except Exception:
+            frappe.db.rollback()
+            frappe.log_error(title=f"AMY POS: link mode {m.name}")
 
 
 def _fix_warehouse(company, c):
