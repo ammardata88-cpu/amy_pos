@@ -624,7 +624,7 @@ def _selling_list():
 
 def _upsert_item_price(item, rate):
     pl = _selling_list()
-    if not pl or rate is None or not frappe.has_permission("Item Price", "write"):
+    if not pl or rate is None or not frappe.has_permission("Item Price", "write") or not frappe.has_permission("Item Price", "create"):
         return
     ip = frappe.db.get_value("Item Price", {"item_code": item, "price_list": pl, "selling": 1}, "name")
     if ip:

@@ -22,6 +22,13 @@ every block hides itself if the user lacks access or an app is missing).
 Customers land on it after login when the site has `"amy_console": 1` in `site_config.json`
 (`scripts/install-site.sh` sets it; use `AMY_CONSOLE=0` to skip). Administrator keeps `/app`.
 
+## Sign-in (separate from ERPNext)
+
+AMY has its own pages: `/amy-login` and `/amy-reset` (password reset by an AMY-styled e-mail).
+ERPNext's `/login` and `/update-password` redirect there. Sessions, roles and permissions still run on
+Frappe underneath. On sites with `amy_console: 1`, users without System Manager are sent from `/app` to `/amy`.
+Sign-in and reset are rate limited per IP (`amy_pos/guard.py`).
+
 ## Install on a bench (once)
 
 ```bash

@@ -8,3 +8,8 @@ def on_session_creation(login_manager=None):
     if frappe.session.user in ("Administrator", "Guest"):
         return
     frappe.local.response["home_page"] = "/amy"
+
+
+def boot_session(bootinfo):
+    """Tell the desk whether this site runs the AMY console (used by amy-desk-guard.js)."""
+    bootinfo.amy_console = 1 if frappe.conf.get("amy_console") else 0
