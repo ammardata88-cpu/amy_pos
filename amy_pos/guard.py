@@ -61,6 +61,10 @@ def before_request():
     if not req or req.method not in ("POST", "GET"):
         return
     path = req.path or ""
+    if path == "/amy" or path.startswith("/amy-"):
+        # Frappe's website page cache would otherwise hand every user the same stored HTML (stale CSRF
+        # token, unrendered template). These pages are per-user, so they are never cached.
+        frappe.local.no_cache = True
     if req.method == "POST" and path in LOGIN_PATHS:
         return _hit("login", _ip())
     if req.method == "POST" and path in RESET_PATHS:
