@@ -215,3 +215,9 @@ def dashboard():
         "zatca": _safe(_zatca_summary, company, month_start),
         "apps": {"pos_next": "pos_next" in apps, "zatca": "ksa_compliance" in apps},
     }
+
+
+@frappe.whitelist(methods=["GET"])
+def csrf():
+    """Fresh CSRF token for the signed-in session (pages may come from a stale cache)."""
+    return frappe.sessions.get_csrf_token()

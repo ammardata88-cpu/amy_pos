@@ -169,13 +169,21 @@ function errMsg(j){
   }catch(e){}
   return AMY.t("err");
 }
-AMY.call = function(method, args){
+AMY.freshToken = function(){
+  return fetch("/api/method/amy_pos.api.csrf",{credentials:"same-origin",headers:{"Accept":"application/json"},cache:"no-store"})
+    .then(function(r){ return r.ok? r.json() : null }).then(function(j){ if(j && j.message) AMY.csrf = j.message; return AMY.csrf }).catch(function(){ return AMY.csrf });
+};
+AMY.call = function(method, args, retried){
   return fetch("/api/method/"+method,{method:"POST",credentials:"same-origin",
     headers:{"Content-Type":"application/json","Accept":"application/json","X-Frappe-CSRF-Token":AMY.csrf},
     body:JSON.stringify(args||{})})
   .then(function(r){
     return r.json().catch(function(){return {}}).then(function(j){
       if(r.status===401 || (r.status===403 && !j._server_messages)){ location.href="/amy-login?next="+encodeURIComponent("/amy"+location.hash); throw {silent:1} }
+      /* a page kept in the browser or a proxy cache carries an old token: get a fresh one and retry once */
+      if(r.status===400 && !retried && /CSRF|Invalid Request/i.test(String(j.exc_type||"")+String(j.exception||"")+String(j._server_messages||""))){
+        return AMY.freshToken().then(function(){ return AMY.call(method, args, true) });
+      }
       if(!r.ok){ var e=new Error(errMsg(j)); e.status=r.status; throw e }
       return j.message;
     });
