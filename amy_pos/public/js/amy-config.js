@@ -144,7 +144,7 @@ var partyContact = [
   {f:"_address_line1",t:"data",l:["العنوان","Address"],span:2},{f:"_city",t:"data",l:["المدينة","City"]},{f:"_country",t:"link",dt:"Country",l:["الدولة","Country"]}];
 docs["Customer"] = {
  slug:"customers", icon:"users", label:["عميل","Customer"], plural:["العملاء","Customers"], newLabel:["عميل جديد","New customer"], newTitle:["عميل جديد","New customer"],
- search:["name","customer_name","mobile_no","tax_id"], fields:["customer_name","customer_group","mobile_no","email_id","tax_id","disabled"],
+ search:["name","customer_name","mobile_no","tax_id"], fields:["customer_name","customer_group","mobile_no","email_id","tax_id","disabled","loyalty_program"],
  cols:[{f:"customer_name",l:["العميل","Customer"]},{f:"mobile_no",l:["الجوال","Mobile"],t:"num"},{f:"tax_id",l:["الرقم الضريبي","Tax ID"],t:"num"},{f:"customer_group",l:["المجموعة","Group"]},{f:"disabled",l:["الحالة","Status"],render:function(r){ return AMY.statusPill(Number(r.disabled)?"Inactive":"Active") }}],
  chips:[{l:["النشطون","Active"],filters:{disabled:0}},{l:ALL,filters:{}},{l:["الموقوفون","Inactive"],filters:{disabled:1}}],
  sections:[
@@ -152,6 +152,7 @@ docs["Customer"] = {
    {f:"customer_name",t:"data",l:["اسم العميل","Customer name"],req:1,span:2},
    {f:"customer_type",t:"select",l:["النوع","Type"],opts:[["Company",["شركة","Company"]],["Individual",["فرد","Individual"]]]},
    {f:"customer_group",t:"link",dt:"Customer Group",l:["المجموعة","Group"],req:1},
+   {f:"loyalty_program",t:"link",dt:"Loyalty Program",l:["برنامج الولاء","Loyalty program"]},
    {f:"territory",t:"link",dt:"Territory",l:["المنطقة","Territory"],req:1},
    {f:"tax_id",t:"data",l:["الرقم الضريبي","Tax ID"],dir:"ltr"},
    {f:"default_price_list",t:"link",dt:"Price List",l:["قائمة الأسعار","Price list"]},

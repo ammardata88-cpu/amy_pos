@@ -190,6 +190,30 @@ docs["Pricing Rule"] = {
   {f:"brands",key:"brand",l:["الماركات","Brands"],newRow:function(){ return {} },cols:[{f:"brand",t:"link",dt:"Brand",l:["الماركة","Brand"],req:1}]}]
 };
 
+/* ---------- loyalty ---------- */
+docs["Loyalty Program"] = {
+ slug:"loyalty", icon:"gift", label:["برنامج ولاء","Loyalty program"], plural:["برامج الولاء","Loyalty programs"],
+ sub:["العميل يجمع نقاطًا مع كل عملية شراء ويستبدلها لاحقًا.","Customers earn points on every purchase and redeem them later."],
+ newLabel:["برنامج جديد","New program"], newTitle:["برنامج ولاء جديد","New loyalty program"],
+ search:["name"], fields:["loyalty_program_name","from_date","to_date","conversion_factor","expiry_duration"],
+ cols:[{f:"loyalty_program_name",l:["البرنامج","Program"]},{f:"from_date",l:["يبدأ","Starts"],t:"date"},{f:"to_date",l:["ينتهي","Ends"],t:"date"},{f:"conversion_factor",l:["قيمة النقطة","Point value"],t:"num"}],
+ chips:[{l:ALL,filters:{}}],
+ defaults:function(d){ d.loyalty_program_type = "Single Tier Program"; d.from_date = new Date().toISOString().slice(0,10); d.auto_opt_in = 1; d.company = AMY.boot.company; d.collection_rules = [{tier_name:"Standard",collection_factor:100,min_spent:0}] },
+ sections:[
+  {title:["البرنامج","Program"],fields:[
+   {f:"loyalty_program_name",t:"data",l:["اسم البرنامج","Program name"],req:1,span:2,newOnly:1},
+   {f:"from_date",t:"date",l:["يبدأ من","Starts"],req:1},{f:"to_date",t:"date",l:["ينتهي في","Ends"]},
+   {f:"auto_opt_in",t:"check",l:["تسجيل كل العملاء تلقائيًا","Enrol every customer automatically"]},
+   {f:"conversion_factor",t:"float",l:["قيمة النقطة عند الاستبدال","Value of one point"],req:1},
+   {f:"expiry_duration",t:"int",l:["صلاحية النقاط (أيام)","Points expire after (days)"]}]},
+  {title:["قاعدة الكسب","Earning rule"],fields:[{t:"table",f:"collection_rules"}]},
+  {title:["الحسابات","Accounts"],fields:[
+   {f:"expense_account",t:"link",dt:"Account",l:["حساب مصروف الولاء","Loyalty expense account"]},
+   {f:"cost_center",t:"link",dt:"Cost Center",l:["مركز التكلفة","Cost center"]}]}],
+ tables:[{f:"collection_rules",l:["قاعدة الكسب","Earning rule"],min:1,newRow:function(){ return {tier_name:"Standard",collection_factor:100,min_spent:0} },cols:[
+  {f:"tier_name",t:"data",l:["الشريحة","Tier"],req:1},{f:"min_spent",t:"money",l:["أقل إنفاق","Minimum spend"]},{f:"collection_factor",t:"money",l:["كل كم يعطي نقطة","Spend per 1 point"],req:1}]}]
+};
+
 /* ---------- small masters ---------- */
 master("Brand",{slug:"brands",icon:"tag",label:["ماركة","Brand"],plural:["الماركات","Brands"],newLabel:["ماركة جديدة","New brand"],newTitle:["ماركة جديدة","New brand"],
  search:["name"],fields:["description"],cols:[{f:"name",l:["الماركة","Brand"]},{f:"description",l:["الوصف","Description"]}],
@@ -213,7 +237,8 @@ AMY.cfg.nav = [
   {to:"/sales-invoices",l:["فواتير المبيعات","Sales invoices"],dt:"Sales Invoice"},
   {to:"/customers",l:["العملاء","Customers"],dt:"Customer"},
   {to:"/payments",l:["المدفوعات والمقبوضات","Payments"],dt:"Payment Entry"},
-  {to:"/promotions",l:["العروض والخصومات","Promotions"],dt:"Pricing Rule"}]},
+  {to:"/promotions",l:["العروض والخصومات","Promotions"],dt:"Pricing Rule"},
+  {to:"/loyalty",l:["برامج الولاء","Loyalty"],dt:"Loyalty Program"}]},
  {id:"pos",icon:"cart",l:["نقاط البيع","Point of sale"],k:[
   {to:"/pos",l:["فتح الكاشير","Open the till"],ext:"/amy-pos",dt:"Sales Invoice"},
   {to:"/pos-profiles",l:["ملفات نقاط البيع","POS profiles"],dt:"POS Profile"},
