@@ -27,7 +27,7 @@ ALLOWED = {
     "Sales Taxes and Charges Template", "Purchase Taxes and Charges Template",
     "Pricing Rule", "POS Profile", "POS Opening Shift", "POS Closing Shift",
     "Sales Invoice Additional Fields", "Quotation", "Sales Order", "Purchase Order",
-    "AMY Shift", "Loyalty Program", "Loyalty Point Entry", "Batch", "Product Bundle", "Payment Terms Template", "Item Tax Template",
+    "AMY Shift", "Loyalty Program", "Fiscal Year", "Loyalty Point Entry", "Batch", "Product Bundle", "Payment Terms Template", "Item Tax Template",
 }
 
 INVOICES = ("Sales Invoice", "Purchase Invoice")

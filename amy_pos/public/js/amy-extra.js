@@ -214,6 +214,14 @@ docs["Loyalty Program"] = {
   {f:"tier_name",t:"data",l:["الشريحة","Tier"],req:1},{f:"min_spent",t:"money",l:["أقل إنفاق","Minimum spend"]},{f:"collection_factor",t:"money",l:["كل كم يعطي نقطة","Spend per 1 point"],req:1}]}]
 };
 
+/* ---------- fiscal years ---------- */
+master("Fiscal Year",{slug:"fiscal-years",icon:"calendar",label:["فترة مالية","Fiscal year"],plural:["الفترات المالية","Fiscal years"],newLabel:["فترة جديدة","New fiscal year"],newTitle:["فترة مالية جديدة","New fiscal year"],
+ sub:["السنة المحاسبية التي تُسجَّل فيها القيود والفواتير.","The accounting year your entries and invoices are posted in."],
+ search:["name"],order:"year_start_date desc",fields:["year","year_start_date","year_end_date","disabled"],
+ cols:[{f:"name",l:["الفترة","Year"]},{f:"year_start_date",l:["البداية","Starts"],t:"date"},{f:"year_end_date",l:["النهاية","Ends"],t:"date"},{f:"disabled",l:["الحالة","Status"],render:function(r){ return AMY.statusPill(Number(r.disabled)?"Inactive":"Active") }}],
+ defaults:function(d){ var y=new Date().getFullYear(); d.year=String(y); d.year_start_date=y+"-01-01"; d.year_end_date=y+"-12-31" },
+ sections:[{fields:[{f:"year",t:"data",l:["اسم الفترة","Name"],req:1,newOnly:1,span:2},{f:"year_start_date",t:"date",l:["تبدأ في","Starts on"],req:1},{f:"year_end_date",t:"date",l:["تنتهي في","Ends on"],req:1},{f:"disabled",t:"check",l:["موقوفة","Disabled"]}]}]});
+
 /* ---------- small masters ---------- */
 master("Brand",{slug:"brands",icon:"tag",label:["ماركة","Brand"],plural:["الماركات","Brands"],newLabel:["ماركة جديدة","New brand"],newTitle:["ماركة جديدة","New brand"],
  search:["name"],fields:["description"],cols:[{f:"name",l:["الماركة","Brand"]},{f:"description",l:["الوصف","Description"]}],
@@ -269,6 +277,7 @@ AMY.cfg.nav = [
 AMY.cfg.settings.splice(2,0,
  {to:"/pos-profiles",icon:"cart",l:["ملفات نقاط البيع","POS profiles"],d:["مستودع الكاشير وطرق الدفع ومن يستخدمه.","Till warehouse, payment methods and cashiers."],dt:"POS Profile"},
  {to:"/promotions",icon:"gift",l:["العروض والخصومات","Promotions"],d:["خصومات تلقائية على المنتجات.","Automatic discounts on products."],dt:"Pricing Rule"},
+ {to:"/fiscal-years",icon:"calendar",l:["الفترة المالية","Fiscal year"],d:["بداية السنة المحاسبية ونهايتها.","Start and end of your accounting year."],dt:"Fiscal Year"},
  {to:"/brands",icon:"tag",l:["الماركات","Brands"],d:["ماركات المنتجات.","Product brands."],dt:"Brand"},
  {to:"/cost-centers",icon:"building",l:["مراكز التكلفة","Cost centers"],d:["توزيع الإيرادات والمصروفات.","Split income and expenses."],dt:"Cost Center"},
  {to:"/territories",icon:"globe",l:["المناطق","Territories"],d:["مناطق العملاء.","Customer regions."],dt:"Territory"});

@@ -12,6 +12,7 @@ var TABS = [
  {to:"/warehouses", l:["الفروع والمخازن","Sites"], m:["warehouses"], dt:"Warehouse"},
  {to:"/tax-types", l:["الضرائب","Taxes"], m:["tax-types","sales-taxes"], dt:"Sales Taxes and Charges Template"},
  {to:"/payment-methods", l:["طرق الدفع","Payment methods"], m:["payment-methods"], dt:"Mode of Payment"},
+ {to:"/fiscal-years", l:["الفترة المالية","Fiscal year"], m:["fiscal-years"], dt:"Fiscal Year"},
  {to:"/e-invoicing", l:["الفوترة الإلكترونية","E-invoicing"], m:["e-invoicing"], admin:1, app:"zatca"},
  {to:"/industry", l:["نوع النشاط","Business type"], m:["industry"], admin:1},
  {to:"/setup", l:["التهيئة السريعة","Quick setup"], m:["setup"], admin:1},
