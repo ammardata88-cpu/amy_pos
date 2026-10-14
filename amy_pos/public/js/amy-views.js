@@ -39,7 +39,16 @@ V.list = function(dt, root, p){
     });
   }
   card.appendChild(h("div",{class:"tools"}, h("div",{class:"search"}, AMY.icon("search"), search), chipsEl));
+  card.classList.add("lst");
   card.appendChild(h("div",{class:"scroll"}, h("table",{class:"tbl"}, thead, body)));
+  /* phones: each row becomes a small card, so every column stays readable */
+  (function(){
+    function label(){
+      var ths = thead.querySelectorAll("th");
+      body.querySelectorAll("tr").forEach(function(tr){ Array.prototype.forEach.call(tr.children,function(td,i){ if(ths[i] && !td.getAttribute("data-l")) td.setAttribute("data-l", ths[i].textContent) }) });
+    }
+    if(window.MutationObserver) new MutationObserver(label).observe(body,{childList:true});
+  })();
   card.appendChild(foot); root.appendChild(card);
   function open(row){ if(cfg.open) cfg.open(row); else AMY.go(route(cfg,row.name)) }
   function drawHead(){

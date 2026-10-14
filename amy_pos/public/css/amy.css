@@ -464,3 +464,16 @@ p{text-wrap:pretty}
 .sub-acts{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}
 .sub-hint{margin:14px 0 0;font-size:var(--t-sm)}
 @media(max-width:700px){.stabs{gap:20px;padding:0 16px}.sub-hero{padding:20px}.sub-left b{font-size:44px}}
+
+/* list rows as cards on phones */
+@media (max-width:700px){
+  .card.lst .scroll{overflow:visible}
+  .card.lst .tbl,.card.lst .tbl tbody{display:block}
+  .card.lst .tbl thead{display:none}
+  .card.lst .tbl tr{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;padding:14px 16px;border-bottom:1px solid var(--rule)}
+  .card.lst .tbl td{direction:inherit!important;display:flex;flex-direction:column;align-items:flex-start;padding:0;border:0;white-space:normal;position:static!important;background:none!important;min-width:0;text-align:start!important}
+  .card.lst .tbl td:first-child{grid-column:1/-1;font-weight:600;font-size:var(--t-base)}
+  .card.lst .tbl td:not(:first-child)::before{content:attr(data-l);display:block;font-size:var(--t-xs);color:var(--mut);font-weight:400;margin-bottom:1px}
+  .card.lst .tbl td.empty{grid-column:1/-1}
+  .card.lst .tbl td.empty::before{display:none}
+}

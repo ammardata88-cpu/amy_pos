@@ -324,7 +324,7 @@ function openShiftScreen(b){
   var cash = numIn(0), go = h("button", {class: "btn p", type: "button", style: "height:52px;width:100%", text: L("ابدأ الوردية", "Start shift")});
   var who = (b.user && b.user.full_name) || "";
   AMY.clear($("till")).appendChild(h("div", {class: "setup"}, h("div", {style: "width:min(420px,100%);text-align:start"},
-    h("div", {class: "brand", style: "margin-bottom:22px;display:flex;align-items:center;gap:12px"}, h("img", {src: b.logo || "/assets/amy_pos/images/amy-logo.png", alt: "", style: "width:44px;height:44px;object-fit:contain;border-radius:10px"}), h("div", null, h("span", {text: "AMY"}), h("small", {text: b.company}))),
+    h("div", {class: "brand", style: "margin-bottom:22px;display:flex;align-items:center;gap:12px"}, h("img", {src: b.logo || "/assets/amy_pos/images/amy-logo.png", alt: "", style: "width:44px;height:44px;object-fit:contain;border-radius:10px"}), h("div", null, h("span", {text: "AMY"}), h("small", {text: b.company, style: "display:block;color:var(--mut);font-size:var(--t-xs);font-weight:400"}))),
     h("h2", {text: L("ابدأ ورديتك", "Start your shift"), style: "margin:0 0 4px"}),
     h("p", {class: "mut", style: "margin:0 0 20px", text: who + (b.profile ? " · " + b.profile : "")}),
     money(L("المبلغ الموجود في الدرج الآن", "Cash in the drawer now"), cash, L("عُدّ النقدية الموجودة قبل أن تبدأ البيع.", "Count the cash before you start selling.")),
